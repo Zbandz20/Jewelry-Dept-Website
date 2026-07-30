@@ -1,0 +1,8 @@
+.securityPanel form { display:grid; gap:18px; max-width:520px; }
+.securityPanel form label { display:grid; gap:9px; color:#888; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+.securityPanel input { background:#0d0d0d; border:1px solid #333; color:#fff; padding:15px; outline:none; }
+.securityPanel input:focus { border-color:var(--gold); }
+.securityPanel form small { color:#e66672; }
+.securityPanel form small.success { color:#35ce78; }
+.securityPanel form button { justify-self:start; border:0; background:var(--paper); color:#111; padding:16px 22px; font-weight:bold; font-size:9px; letter-spacing:.12em; }
+.securityPanel form button:disabled { opacity:.6; }
