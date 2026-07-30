@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import { neon } from "@neondatabase/serverless";
 
@@ -7,15 +7,46 @@ export function getSql() {
   return neon(process.env.DATABASE_URL);
 }
 
-export function adminToken() {
-  const password = process.env.ADMIN_PASSWORD || "";
-  return createHash("sha256").update(`jewelry-dept:${password}`).digest("hex");
+async function ensureAdminAuthTable() {
+  const sql = getSql();
+  await sql`CREATE TABLE IF NOT EXISTS jd_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+}
+
+async function savedPasswordHash() {
+  await ensureAdminAuthTable();
+  const rows = await getSql()`SELECT value FROM jd_settings WHERE key = 'admin_password_hash' LIMIT 1`;
+  return rows[0]?.value ? String(rows[0].value) : "";
+}
+
+export async function verifyAdminPassword(password: string) {
+  const saved = await savedPasswordHash();
+  if (!saved) {
+    const original = process.env.ADMIN_PASSWORD || "";
+    if (!original || password.length !== original.length) return false;
+    return timingSafeEqual(Buffer.from(password), Buffer.from(original));
+  }
+  const [salt, expected] = saved.split(":");
+  if (!salt || !expected) return false;
+  const actual = scryptSync(password, salt, 64).toString("hex");
+  return actual.length === expected.length && timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+}
+
+export async function setAdminPassword(password: string) {
+  await ensureAdminAuthTable();
+  const salt = randomBytes(16).toString("hex");
+  const value = `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
+  await getSql()`INSERT INTO jd_settings (key, value, updated_at) VALUES ('admin_password_hash', ${value}, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`;
+}
+
+export async function adminToken() {
+  const credential = (await savedPasswordHash()) || process.env.ADMIN_PASSWORD || "";
+  return createHash("sha256").update(`jewelry-dept:${credential}`).digest("hex");
 }
 
 export async function isAdmin() {
   if (!process.env.ADMIN_PASSWORD) return false;
   const cookie = (await cookies()).get("jd_admin")?.value || "";
-  const expected = adminToken();
+  const expected = await adminToken();
   if (cookie.length !== expected.length) return false;
   return timingSafeEqual(Buffer.from(cookie), Buffer.from(expected));
 }
