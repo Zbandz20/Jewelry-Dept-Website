@@ -176,8 +176,17 @@ function Compare({ label, a, b }: { label: string; a: string; b: string }) {
 function Logo() {
   return (
     <a className="wordmark" href="#" aria-label="Jewelry Dept. home">
-      <span className="flagMark" aria-hidden="true"><b></b><b></b><b></b></span>
-      <span>JEWELRY <i>DEPT.</i></span>
+      <span className="logoType" aria-hidden="true">
+        <b>JEWELRY</b>
+        <i>DEPT.</i>
+        <svg className="mexicanSeal" viewBox="0 0 64 64" role="presentation">
+          <path className="sealWreath" d="M12 43c5 10 13 15 20 16M52 43c-5 10-13 15-20 16M15 47l-5-1m9 6-5 1m35-6 5-1m-9 6 5 1" />
+          <path className="sealCactus" d="M28 51c0-8 1-14 3-20m5 20c0-7-1-12-3-17m-4 7-5-5m11 6 5-6m-12 4-4 1m12-1 4 1" />
+          <path className="sealEagle" d="M30 35c-8-1-14-7-16-16 6 1 11 4 15 8-1-8 2-15 9-20 1 6 0 11-2 16 5-4 10-5 15-3-3 7-8 12-15 14l-1 7-7-1 2-5Z" />
+          <path className="sealSnake" d="M38 22c7-3 11 0 8 4-2 3-6 2-8 6" />
+          <circle className="sealEye" cx="38.5" cy="17" r="1.4" />
+        </svg>
+      </span>
     </a>
   );
 }
