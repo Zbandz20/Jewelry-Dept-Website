@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import "./admin.css";
+import "./security.css";
 
 type DashboardData = {
   summary: { total_orders: number; gross: number; live_visitors: number; visitors_today: number; average_order: number };
@@ -16,6 +17,9 @@ export default function AdminPhotos() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState("overview");
   const [saving, setSaving] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
 
   async function load() {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
@@ -48,6 +52,22 @@ export default function AdminPhotos() {
     reader.readAsDataURL(file);
   }
 
+  async function changePassword(event: React.FormEvent) {
+    event.preventDefault();
+    setPasswordMessage("");
+    if (newPassword !== confirmPassword) return setPasswordMessage("New passwords do not match.");
+    setSaving("password");
+    const response = await fetch("/api/admin/password", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newPassword }),
+    });
+    const result = await response.json();
+    setSaving("");
+    if (!response.ok) return setPasswordMessage(result.error || "Password could not be changed.");
+    setNewPassword(""); setConfirmPassword("");
+    setPasswordMessage("Password updated successfully.");
+  }
+
   if (!data) return (
     <main className="adminLogin">
       <form onSubmit={login}>
@@ -66,7 +86,7 @@ export default function AdminPhotos() {
     <main className="adminShell">
       <aside>
         <div className="adminBrand"><span className="adminFlag"><i></i><i></i><i></i></span><b>JEWELRY<br />DEPT.</b></div>
-        <nav>{["overview", "inventory", "photos", "orders"].map((item) => <button className={tab === item ? "active" : ""} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
+        <nav>{["overview", "inventory", "photos", "orders", "security"].map((item) => <button className={tab === item ? "active" : ""} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
         <a href="/" target="_blank">VIEW STOREFRONT ↗</a>
       </aside>
       <section className="adminMain">
@@ -99,6 +119,16 @@ export default function AdminPhotos() {
         {tab === "orders" && <div className="adminPanel">
           <div className="panelHead"><div><p>SALES</p><h2>Recent orders</h2></div><span>{data.orders.length} records shown</span></div>
           {data.orders.length ? <div className="orderTable">{data.orders.map(order => <div key={order.id}><b>#{order.id}</b><span>{order.customer_name}<small>{order.customer_email}</small></span><span>{new Date(order.created_at).toLocaleDateString()}</span><strong>{money(order.total)}</strong><em>{order.status}</em></div>)}</div> : <div className="emptyState"><b>No orders recorded yet.</b><p>Orders will appear here when checkout is connected.</p></div>}
+        </div>}
+
+        {tab === "security" && <div className="adminPanel securityPanel">
+          <div className="panelHead"><div><p>MANAGEMENT ACCESS</p><h2>Set a new password</h2></div><span>Your password is encrypted before storage</span></div>
+          <form onSubmit={changePassword}>
+            <label>New password<input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={10} autoComplete="new-password" /></label>
+            <label>Confirm new password<input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={10} autoComplete="new-password" /></label>
+            <small className={passwordMessage.includes("successfully") ? "success" : ""}>{passwordMessage || "Use at least 10 characters."}</small>
+            <button disabled={saving === "password"}>{saving === "password" ? "UPDATING…" : "UPDATE PASSWORD"}</button>
+          </form>
         </div>}
       </section>
     </main>
