@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const products = [
   { name: "La Corona", detail: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, tag: "DROP 05" },
@@ -14,6 +14,17 @@ export default function Home() {
   const [stone, setStone] = useState("Moissanite");
   const [gold, setGold] = useState("14K");
   const [menu, setMenu] = useState(false);
+  const [siteImages, setSiteImages] = useState({ hero: "/images/hero.jpg", featured: "/images/cuban.jpg" });
+
+  useEffect(() => {
+    fetch("/api/site-content").then(response => response.ok ? response.json() : null).then(content => {
+      if (content?.assets) setSiteImages(current => ({ ...current, ...content.assets }));
+    }).catch(() => {});
+    const storageKey = "jd-session";
+    let sessionId = sessionStorage.getItem(storageKey);
+    if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem(storageKey, sessionId); }
+    fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
+  }, []);
 
   return (
     <main>
@@ -43,7 +54,7 @@ export default function Home() {
       </nav>
 
       <header className="hero">
-        <div className="heroImage" />
+        <div className="heroImage" style={{ backgroundImage: `url(${siteImages.hero})` }} />
         <div className="heroShade" />
         <div className="heroCopy">
           <p className="eyebrow">FIRE WITHOUT COMPROMISE — EST. MMXXVI</p>
@@ -72,7 +83,7 @@ export default function Home() {
 
       <section className="featured" id="drop">
         <div className="productVisual">
-          <img src="/images/cuban.jpg" alt="La Corona iced Cuban-link chain in yellow gold" />
+          <img src={siteImages.featured} alt="La Corona iced Cuban-link chain in yellow gold" />
           <span className="dropTag">DROP 05 · LIMITED</span>
         </div>
         <div className="featuredInfo">
@@ -95,7 +106,7 @@ export default function Home() {
           {products.map((product, index) => (
             <article className="card" key={product.name}>
               <div className={`cardImage crop${index + 1}`}>
-                <img src="/images/cuban.jpg" alt="" />
+                <img src={siteImages.featured} alt="" />
                 <span>{product.tag}</span>
               </div>
               <div className="cardTop"><h3>{product.name}</h3><strong>${product.price.toLocaleString()}</strong></div>
