@@ -32,7 +32,7 @@ export default function Home() {
 
       <nav className="nav">
         <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation">MENU</button>
-        <a className="wordmark" href="#">JEWELRY <i>DEPT.</i></a>
+        <Logo />
         <div className={`navlinks ${menu ? "open" : ""}`}>
           <a href="#drop" onClick={() => setMenu(false)}>THE DROP</a>
           <a href="#pieces" onClick={() => setMenu(false)}>PIECES</a>
@@ -62,6 +62,13 @@ export default function Home() {
         <h2>You don’t wear it to be seen.<br />You wear it so they <em>never forget.</em></h2>
         <p>Every piece leaves the bench certified, hand-set, and cut to throw light across a room. This isn’t jewelry that whispers. It announces.</p>
       </section>
+
+      <div className="mexicoMarquee" aria-label="Con fe, con fuego, con orgullo">
+        <div>
+          <span>CON FE.</span><b>◆</b><span>CON FUEGO.</span><b>◆</b><span>CON ORGULLO.</span><b>◆</b>
+          <span>CON FE.</span><b>◆</b><span>CON FUEGO.</span><b>◆</b><span>CON ORGULLO.</span><b>◆</b>
+        </div>
+      </div>
 
       <section className="featured" id="drop">
         <div className="productVisual">
@@ -138,7 +145,7 @@ export default function Home() {
       </section>
 
       <footer>
-        <a className="wordmark" href="#">JEWELRY <i>DEPT.</i></a>
+        <Logo />
         <p>Fire without compromise.<br />Solid gold. Certified stones. Set by hand.</p>
         <div><a href="#pieces">SHOP</a><a href="#custom">CUSTOM</a><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
         <small>© 2026 JEWELRY DEPT. · ALL RIGHTS RESERVED</small>
@@ -153,4 +160,13 @@ function Option({ label, items, value, setValue }: { label: string; items: strin
 
 function Compare({ label, a, b }: { label: string; a: string; b: string }) {
   return <div className="compareRow"><span>{label}</span><strong>{a}</strong><span>{b}</span></div>;
+}
+
+function Logo() {
+  return (
+    <a className="wordmark" href="#" aria-label="Jewelry Dept. home">
+      <span className="flagMark" aria-hidden="true"><b></b><b></b><b></b></span>
+      <span>JEWELRY <i>DEPT.</i></span>
+    </a>
+  );
 }
