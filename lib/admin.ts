@@ -38,6 +38,50 @@ export async function setAdminPassword(password: string) {
   await getSql()`INSERT INTO jd_settings (key, value, updated_at) VALUES ('admin_password_hash', ${value}, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`;
 }
 
+function hashRecoveryAnswer(answer: string, salt: string) {
+  return scryptSync(answer.trim().toLocaleLowerCase(), salt, 64).toString("hex");
+}
+
+export async function setRecoveryQuestion(question: string, answer: string) {
+  await ensureAdminAuthTable();
+  const salt = randomBytes(16).toString("hex");
+  const answerHash = `${salt}:${hashRecoveryAnswer(answer, salt)}`;
+  const sql = getSql();
+  await sql`
+    INSERT INTO jd_settings (key, value, updated_at) VALUES
+      ('admin_security_question', ${question.trim()}, NOW()),
+      ('admin_security_answer_hash', ${answerHash}, NOW())
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+  `;
+}
+
+export async function getRecoveryQuestion() {
+  await ensureAdminAuthTable();
+  const rows = await getSql()`SELECT value FROM jd_settings WHERE key = 'admin_security_question' LIMIT 1`;
+  return rows[0]?.value ? String(rows[0].value) : "";
+}
+
+export async function getCheckoutEnabled() {
+  await ensureAdminAuthTable();
+  const rows = await getSql()`SELECT value FROM jd_settings WHERE key = 'checkout_enabled' LIMIT 1`;
+  return rows[0]?.value === "true";
+}
+
+export async function setCheckoutEnabled(enabled: boolean) {
+  await ensureAdminAuthTable();
+  await getSql()`INSERT INTO jd_settings (key, value, updated_at) VALUES ('checkout_enabled', ${enabled ? "true" : "false"}, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`;
+}
+
+export async function verifyRecoveryAnswer(answer: string) {
+  await ensureAdminAuthTable();
+  const rows = await getSql()`SELECT value FROM jd_settings WHERE key = 'admin_security_answer_hash' LIMIT 1`;
+  const saved = rows[0]?.value ? String(rows[0].value) : "";
+  const [salt, expected] = saved.split(":");
+  if (!salt || !expected) return false;
+  const actual = hashRecoveryAnswer(answer, salt);
+  return actual.length === expected.length && timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+}
+
 export async function adminToken() {
   const credential = (await savedPasswordHash()) || process.env.ADMIN_PASSWORD || "";
   return createHash("sha256").update(`jewelry-dept:${credential}`).digest("hex");
@@ -75,6 +119,8 @@ export async function ensureAdminTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS stripe_session_id TEXT`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS jd_orders_stripe_session_idx ON jd_orders(stripe_session_id) WHERE stripe_session_id IS NOT NULL`;
   await sql`
     CREATE TABLE IF NOT EXISTS jd_assets (
       id TEXT PRIMARY KEY,
