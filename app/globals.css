@@ -16,7 +16,7 @@ button { cursor:pointer; }
 .tickerGroup b { color:var(--gold); font-size:8px; font-weight:400; padding-left:42px; }
 @keyframes ticker { from { transform:translate3d(0,0,0); } to { transform:translate3d(-50%,0,0); } }
 .nav { height:82px; padding:0 4vw; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; border-bottom:1px solid var(--line); position:absolute; top:31px; width:100%; z-index:10; }
-.wordmark { display:inline-flex; align-items:center; width:215px; height:62px; transform:rotate(-2deg); filter:drop-shadow(0 2px 1px rgba(0,0,0,.9)); }
+.wordmark { display:inline-flex; align-items:center; width:260px; height:70px; transform:rotate(-2deg); filter:drop-shadow(0 2px 1px rgba(0,0,0,.9)); }
 .logoSvg { display:block; width:100%; height:auto; overflow:visible; }
 .galleryBrush { font-family:'Knewave','Arial Black',sans-serif; font-weight:400; letter-spacing:-3px; }
 .logoJewelry { font-size:70px; }
@@ -134,7 +134,7 @@ footer small { grid-column:1/-1; color:#4f4c47; font-size:8px; letter-spacing:.1
 }
 @media (max-width:600px) {
   .nav { height:68px; top:31px; padding:0 18px; }
-  .nav>.wordmark { width:154px; height:48px; }
+  .nav>.wordmark { width:180px; height:52px; }
   .hero { min-height:720px; }
   .heroImage { background-position:64% center; }
   .heroShade { background:linear-gradient(90deg,rgba(0,0,0,.92),rgba(0,0,0,.35)),linear-gradient(0deg,#090909,transparent 50%); }
