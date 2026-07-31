@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 const products = [
   { id: 1, name: "La Corona", detail: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, tag: "DROP 05" },
@@ -199,19 +199,29 @@ function Compare({ label, a, b }: { label: string; a: string; b: string }) {
 }
 
 function Logo() {
+  const clipId = useId();
   return (
     <a className="wordmark" href="#" aria-label="Jewelry Dept. home">
-      <span className="logoType" aria-hidden="true">
-        <b>JEWELRY</b>
-        <i>DEPT.</i>
-        <svg className="mexicanSeal" viewBox="0 0 64 64" role="presentation">
-          <path className="sealWreath" d="M12 43c5 10 13 15 20 16M52 43c-5 10-13 15-20 16M15 47l-5-1m9 6-5 1m35-6 5-1m-9 6 5 1" />
-          <path className="sealCactus" d="M28 51c0-8 1-14 3-20m5 20c0-7-1-12-3-17m-4 7-5-5m11 6 5-6m-12 4-4 1m12-1 4 1" />
-          <path className="sealEagle" d="M30 35c-8-1-14-7-16-16 6 1 11 4 15 8-1-8 2-15 9-20 1 6 0 11-2 16 5-4 10-5 15-3-3 7-8 12-15 14l-1 7-7-1 2-5Z" />
-          <path className="sealSnake" d="M38 22c7-3 11 0 8 4-2 3-6 2-8 6" />
-          <circle className="sealEye" cx="38.5" cy="17" r="1.4" />
-        </svg>
-      </span>
+      <svg className="logoSvg" viewBox="0 0 430 112" role="presentation" aria-hidden="true">
+        <defs><clipPath id={clipId}>
+          <text className="galleryBrush logoJewelry" x="8" y="65">JEWELRY</text>
+          <text className="galleryBrush logoDept" x="226" y="103">DEPT.</text>
+        </clipPath></defs>
+        <g clipPath={`url(#${clipId})`}>
+          <rect width="143.5" height="112" fill="#006847" /><rect x="143.5" width="143.5" height="112" fill="#f7f4ec" /><rect x="287" width="143" height="112" fill="#ce1126" />
+          <g className="fullMexicanSeal" transform="translate(177 5) scale(1.45)">
+            <path className="logoWreath" d="M7 55c8 15 21 23 34 24M75 55C67 70 54 78 41 79M12 61l-9-2m16 10-9 3m60-11 9-2M63 69l9 3" />
+            <path className="logoCactus" d="M36 67c0-15 1-26 5-39m8 39c0-12-2-22-6-32m-6 18-10-10m20 12 11-12M36 50l-9 2m21-2 10 2" />
+            <path className="logoRock" d="M25 68c11-5 25-5 37 0l-5 7H30Z" />
+            <path className="logoEagle" d="M39 38C26 36 16 26 13 10c11 2 20 7 27 15-2-13 3-25 15-33 2 10 0 20-4 29 8-7 18-9 27-5-5 13-14 21-27 25l-2 12-13-2 3-13Z" />
+            <path className="logoWing" d="M19 14c8 3 14 8 20 15M51 23c8-5 15-6 21-5" />
+            <path className="logoSnake" d="M54 18c13-6 21-1 15 7-4 5-11 3-15 11" />
+            <circle className="logoEye" cx="55" cy="9" r="2.2" />
+          </g>
+        </g>
+        <text className="galleryBrush logoJewelry logoOutline" x="8" y="65">JEWELRY</text>
+        <text className="galleryBrush logoDept logoOutline" x="226" y="103">DEPT.</text>
+      </svg>
     </a>
   );
 }
