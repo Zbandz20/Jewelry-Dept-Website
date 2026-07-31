@@ -6,3 +6,18 @@
 .securityPanel form small.success { color:#35ce78; }
 .securityPanel form button { justify-self:start; border:0; background:var(--paper); color:#111; padding:16px 22px; font-weight:bold; font-size:9px; letter-spacing:.12em; }
 .securityPanel form button:disabled { opacity:.6; }
+
+.adminLogin .textButton { background:transparent; color:#999; margin-top:8px; padding:10px; }
+.adminLogin form label:not(:first-of-type) { margin-top:16px; }
+.securityStack { display:grid; gap:4px; }
+.checkoutStatus { display:flex; justify-content:space-between; align-items:center; gap:24px; padding:25px; background:#0d0d0d; }
+.checkoutStatus>div { display:flex; align-items:center; gap:16px; }
+.checkoutStatus p,.setupNotice p { color:#777; font-size:11px; margin:6px 0 0; }
+.statusOn,.statusOff { width:12px; height:12px; border-radius:50%; display:block; }
+.statusOn { background:#35ce78; box-shadow:0 0 14px #35ce78; }
+.statusOff { background:#777; }
+.checkoutStatus button { border:0; background:var(--paper); color:#111; padding:16px 20px; font-size:9px; font-weight:bold; letter-spacing:.12em; }
+.checkoutStatus button:disabled { opacity:.35; cursor:not-allowed; }
+.setupNotice { border-left:2px solid var(--gold); padding:14px 18px; margin-top:18px; background:#17130e; }
+.panelError { display:block; color:#e66672; margin-top:15px; }
+@media(max-width:600px) { .checkoutStatus { align-items:stretch; flex-direction:column; } }
