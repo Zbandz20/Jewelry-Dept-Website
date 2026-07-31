@@ -3,28 +3,48 @@
 import { useEffect, useState } from "react";
 
 const products = [
-  { name: "La Corona", detail: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, tag: "DROP 05" },
-  { name: "La Cadena", detail: "10mm Cuban · VVS moissanite · 14k gold", price: 1290, tag: "MADE TO ORDER" },
-  { name: "Solitario", detail: "2ct round · D color · 14k white gold", price: 890, tag: "BEST SELLER" },
-  { name: "La Cruz", detail: "Full pavé · moissanite · 14k gold", price: 980, tag: "WITH BLESSING" },
+  { id: 1, name: "La Corona", detail: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, tag: "DROP 05" },
+  { id: 2, name: "La Cadena", detail: "10mm Cuban · VVS moissanite · 14k gold", price: 1290, tag: "MADE TO ORDER" },
+  { id: 3, name: "Solitario", detail: "2ct round · D color · 14k white gold", price: 890, tag: "BEST SELLER" },
+  { id: 4, name: "La Cruz", detail: "Full pavé · moissanite · 14k gold", price: 980, tag: "WITH BLESSING" },
 ];
 
 export default function Home() {
-  const [cart, setCart] = useState(0);
+  const [cartItems, setCartItems] = useState<number[]>([]);
   const [stone, setStone] = useState("Moissanite");
   const [gold, setGold] = useState("14K");
   const [menu, setMenu] = useState(false);
   const [siteImages, setSiteImages] = useState({ hero: "/images/hero.jpg", featured: "/images/cuban.jpg" });
+  const [checkoutEnabled, setCheckoutEnabled] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  const cart = cartItems.length;
 
   useEffect(() => {
     fetch("/api/site-content").then(response => response.ok ? response.json() : null).then(content => {
       if (content?.assets) setSiteImages(current => ({ ...current, ...content.assets }));
+      setCheckoutEnabled(Boolean(content?.checkoutEnabled));
     }).catch(() => {});
     const storageKey = "jd-session";
     let sessionId = sessionStorage.getItem(storageKey);
     if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem(storageKey, sessionId); }
     fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
   }, []);
+
+  async function startCheckout() {
+    setCheckoutError("");
+    if (!checkoutEnabled) return setCheckoutError("Checkout is opening soon.");
+    const counts = cartItems.reduce<Record<number, number>>((all, id) => ({ ...all, [id]: (all[id] || 0) + 1 }), {});
+    setCheckoutBusy(true);
+    const response = await fetch("/api/checkout", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: Object.entries(counts).map(([id, quantity]) => ({ id: Number(id), quantity })) }),
+    });
+    const result = await response.json();
+    setCheckoutBusy(false);
+    if (!response.ok) return setCheckoutError(result.error || "Checkout could not start.");
+    window.location.href = result.url;
+  }
 
   return (
     <main>
@@ -94,7 +114,7 @@ export default function Home() {
           <Option label="Gold" items={["10K", "14K", "18K", "24K"]} value={gold} setValue={setGold} />
           <div className="buyRow">
             <div><small>FROM</small><strong>$1,450</strong></div>
-            <button onClick={() => setCart(cart + 1)}>ADD TO BAG — SHIPS FREE</button>
+            <button onClick={() => setCartItems(items => [...items, 1])}>ADD TO BAG — SHIPS FREE</button>
           </div>
           <div className="assurances"><span>✓ CERTIFIED STONES</span><span>✓ 30-DAY RETURNS</span><span>✓ LIFETIME SERVICE</span></div>
         </div>
@@ -111,7 +131,7 @@ export default function Home() {
               </div>
               <div className="cardTop"><h3>{product.name}</h3><strong>${product.price.toLocaleString()}</strong></div>
               <p>{product.detail}</p>
-              <button onClick={() => setCart(cart + 1)}>ADD TO BAG <span>+</span></button>
+              <button onClick={() => setCartItems(items => [...items, product.id])}>ADD TO BAG <span>+</span></button>
             </article>
           ))}
         </div>
@@ -154,6 +174,11 @@ export default function Home() {
           <button type="submit">JOIN THE LIST →</button>
         </form>
       </section>
+
+      {cart > 0 && <div className="checkoutBar">
+        <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} IN YOUR BAG</b>{checkoutError && <span>{checkoutError}</span>}</div>
+        <button onClick={startCheckout} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button>
+      </div>}
 
       <footer>
         <Logo />
