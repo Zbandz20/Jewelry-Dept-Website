@@ -208,7 +208,8 @@ function Logo({ clipId }: { clipId: string }) {
         </clipPath></defs>
         <g clipPath={`url(#${clipId})`}>
           <rect width="143.5" height="112" fill="#006847" /><rect x="143.5" width="143.5" height="112" fill="#f7f4ec" /><rect x="287" width="143" height="112" fill="#ce1126" />
-          <g className="fullMexicanSeal" transform="translate(177 5) scale(1.45)">
+        </g>
+          <g className="fullMexicanSeal" transform="translate(191 22) scale(.58)">
             <path className="logoWreath" d="M7 55c8 15 21 23 34 24M75 55C67 70 54 78 41 79M12 61l-9-2m16 10-9 3m60-11 9-2M63 69l9 3" />
             <path className="logoCactus" d="M36 67c0-15 1-26 5-39m8 39c0-12-2-22-6-32m-6 18-10-10m20 12 11-12M36 50l-9 2m21-2 10 2" />
             <path className="logoRock" d="M25 68c11-5 25-5 37 0l-5 7H30Z" />
@@ -217,7 +218,6 @@ function Logo({ clipId }: { clipId: string }) {
             <path className="logoSnake" d="M54 18c13-6 21-1 15 7-4 5-11 3-15 11" />
             <circle className="logoEye" cx="55" cy="9" r="2.2" />
           </g>
-        </g>
         <text className="galleryBrush logoJewelry logoOutline" x="8" y="65">JEWELRY</text>
         <text className="galleryBrush logoDept logoOutline" x="226" y="103">DEPT.</text>
       </svg>
