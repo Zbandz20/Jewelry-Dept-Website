@@ -9,6 +9,8 @@ type DashboardData = {
   products: Array<{ id: number; name: string; sku: string; price: number; inventory: number; active: boolean }>;
   orders: Array<{ id: number; customer_name: string; customer_email: string; total: number; status: string; created_at: string }>;
   assets: Array<{ id: string; label: string; data_url: string; updated_at: string }>;
+  checkoutEnabled: boolean;
+  stripeReady: boolean;
 };
 
 export default function AdminPhotos() {
@@ -20,12 +22,22 @@ export default function AdminPhotos() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [securityQuestion, setSecurityQuestion] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
+  const [securityMessage, setSecurityMessage] = useState("");
 
   async function load() {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
     if (response.ok) setData(await response.json());
   }
   useEffect(() => { load(); const timer = setInterval(load, 30000); return () => clearInterval(timer); }, []);
+  useEffect(() => {
+    if (tab !== "security" || !data) return;
+    fetch("/api/admin/security", { cache: "no-store" }).then(response => response.ok ? response.json() : null).then(result => {
+      if (result?.question) setSecurityQuestion(result.question);
+    }).catch(() => {});
+  }, [tab, data]);
 
   async function login(event: React.FormEvent) {
     event.preventDefault();
@@ -68,6 +80,53 @@ export default function AdminPhotos() {
     setPasswordMessage("Password updated successfully.");
   }
 
+  async function startRecovery() {
+    setError("");
+    const response = await fetch("/api/admin/recovery", { cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok) return setError(result.error || "Password recovery is not available.");
+    setSecurityQuestion(result.question); setRecoveryMode(true);
+  }
+  async function recoverPassword(event: React.FormEvent) {
+    event.preventDefault(); setError("");
+    if (newPassword !== confirmPassword) return setError("New passwords do not match.");
+    const response = await fetch("/api/admin/recovery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answer: securityAnswer, newPassword }) });
+    const result = await response.json();
+    if (!response.ok) return setError(result.error || "Password could not be reset.");
+    setSecurityAnswer(""); setNewPassword(""); setConfirmPassword(""); await load();
+  }
+  async function saveRecoveryQuestion(event: React.FormEvent) {
+    event.preventDefault(); setSecurityMessage("");
+    const response = await fetch("/api/admin/security", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: securityQuestion, answer: securityAnswer }) });
+    const result = await response.json();
+    if (!response.ok) return setSecurityMessage(result.error || "Security question could not be saved.");
+    setSecurityAnswer(""); setSecurityMessage("Security question saved successfully.");
+  }
+  async function toggleCheckout() {
+    if (!data) return; setSaving("checkout");
+    const response = await fetch("/api/admin/dashboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "checkout-toggle", enabled: !data.checkoutEnabled }) });
+    const result = await response.json(); setSaving("");
+    if (!response.ok) return setError(result.error || "Checkout could not be updated.");
+    setError(""); await load();
+  }
+
+  if (!data && recoveryMode) return (
+    <main className="adminLogin">
+      <form onSubmit={recoverPassword}>
+        <span className="adminFlag"><i></i><i></i><i></i></span>
+        <p>JEWELRY DEPT.</p><h1>Recover<br /><em>access.</em></h1>
+        <label>{securityQuestion}</label>
+        <input type="text" value={securityAnswer} onChange={(e) => setSecurityAnswer(e.target.value)} autoFocus required autoComplete="off" />
+        <label htmlFor="recovery-password">New password</label>
+        <input id="recovery-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={10} required />
+        <label htmlFor="recovery-confirm">Confirm new password</label>
+        <input id="recovery-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={10} required />
+        {error && <small>{error}</small>}<button>RESET PASSWORD</button>
+        <button className="textButton" type="button" onClick={() => { setRecoveryMode(false); setError(""); }}>BACK TO SIGN IN</button>
+      </form>
+    </main>
+  );
+
   if (!data) return (
     <main className="adminLogin">
       <form onSubmit={login}>
@@ -77,6 +136,7 @@ export default function AdminPhotos() {
         <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
         {error && <small>{error}</small>}
         <button>ENTER DASHBOARD</button>
+        <button className="textButton" type="button" onClick={startRecovery}>FORGOT PASSWORD?</button>
       </form>
     </main>
   );
@@ -86,7 +146,7 @@ export default function AdminPhotos() {
     <main className="adminShell">
       <aside>
         <div className="adminBrand"><span className="adminFlag"><i></i><i></i><i></i></span><b>JEWELRY<br />DEPT.</b></div>
-        <nav>{["overview", "inventory", "photos", "orders", "security"].map((item) => <button className={tab === item ? "active" : ""} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
+        <nav>{["overview", "inventory", "photos", "orders", "checkout", "security"].map((item) => <button className={tab === item ? "active" : ""} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
         <a href="/" target="_blank">VIEW STOREFRONT ↗</a>
       </aside>
       <section className="adminMain">
@@ -121,7 +181,17 @@ export default function AdminPhotos() {
           {data.orders.length ? <div className="orderTable">{data.orders.map(order => <div key={order.id}><b>#{order.id}</b><span>{order.customer_name}<small>{order.customer_email}</small></span><span>{new Date(order.created_at).toLocaleDateString()}</span><strong>{money(order.total)}</strong><em>{order.status}</em></div>)}</div> : <div className="emptyState"><b>No orders recorded yet.</b><p>Orders will appear here when checkout is connected.</p></div>}
         </div>}
 
-        {tab === "security" && <div className="adminPanel securityPanel">
+        {tab === "checkout" && <div className="adminPanel checkoutPanel">
+          <div className="panelHead"><div><p>STRIPE CHECKOUT</p><h2>Payment activation</h2></div><span>{data.stripeReady ? "Stripe is connected" : "Stripe connection required"}</span></div>
+          <div className="checkoutStatus">
+            <div><span className={data.checkoutEnabled ? "statusOn" : "statusOff"}></span><div><b>{data.checkoutEnabled ? "CHECKOUT IS LIVE" : "CHECKOUT IS OFF"}</b><p>{data.checkoutEnabled ? "Customers can complete purchases." : "No customer payments can be accepted yet."}</p></div></div>
+            <button onClick={toggleCheckout} disabled={!data.stripeReady || saving === "checkout"}>{saving === "checkout" ? "UPDATING…" : data.checkoutEnabled ? "TURN OFF CHECKOUT" : "ACTIVATE CHECKOUT"}</button>
+          </div>
+          {!data.stripeReady && <div className="setupNotice"><b>Stripe setup needed</b><p>Connect your Stripe account and webhook before this switch can be activated.</p></div>}
+          {error && <small className="panelError">{error}</small>}
+        </div>}
+
+        {tab === "security" && <div className="securityStack"><div className="adminPanel securityPanel">
           <div className="panelHead"><div><p>MANAGEMENT ACCESS</p><h2>Set a new password</h2></div><span>Your password is encrypted before storage</span></div>
           <form onSubmit={changePassword}>
             <label>New password<input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={10} autoComplete="new-password" /></label>
@@ -129,7 +199,16 @@ export default function AdminPhotos() {
             <small className={passwordMessage.includes("successfully") ? "success" : ""}>{passwordMessage || "Use at least 10 characters."}</small>
             <button disabled={saving === "password"}>{saving === "password" ? "UPDATING…" : "UPDATE PASSWORD"}</button>
           </form>
-        </div>}
+        </div>
+        <div className="adminPanel securityPanel">
+          <div className="panelHead"><div><p>PASSWORD RECOVERY</p><h2>Security question</h2></div><span>Used only if you forget your password</span></div>
+          <form onSubmit={saveRecoveryQuestion}>
+            <label>Security question<input type="text" value={securityQuestion} onChange={e => setSecurityQuestion(e.target.value)} placeholder="Example: What was the name of my first pet?" required minLength={8} /></label>
+            <label>Security answer<input type="password" value={securityAnswer} onChange={e => setSecurityAnswer(e.target.value)} placeholder="Enter an answer you will remember" required minLength={3} autoComplete="off" /></label>
+            <small className={securityMessage.includes("successfully") ? "success" : ""}>{securityMessage || "Answers are not case-sensitive."}</small>
+            <button>SAVE SECURITY QUESTION</button>
+          </form>
+        </div></div>}
       </section>
     </main>
   );
