@@ -1,4 +1,4 @@
-import { ensureAdminTables, getSql, isAdmin } from "@/lib/admin";
+import { ensureAdminTables, getCheckoutEnabled, getSql, isAdmin, setCheckoutEnabled } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export async function GET() {
   const products = await sql`SELECT * FROM jd_products ORDER BY id`;
   const orders = await sql`SELECT * FROM jd_orders ORDER BY created_at DESC LIMIT 25`;
   const assets = await sql`SELECT id, label, data_url, updated_at FROM jd_assets ORDER BY id`;
-  return Response.json({ summary, products, orders, assets });
+  return Response.json({ summary, products, orders, assets, checkoutEnabled: await getCheckoutEnabled(), stripeReady: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET) });
 }
 
 export async function POST(request: Request) {
@@ -55,6 +55,13 @@ export async function POST(request: Request) {
 
   if (body.type === "order-status") {
     await sql`UPDATE jd_orders SET status = ${String(body.status)} WHERE id = ${Number(body.id)}`;
+    return Response.json({ ok: true });
+  }
+  if (body.type === "checkout-toggle") {
+    if (Boolean(body.enabled) && (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET)) {
+      return Response.json({ error: "Connect Stripe before activating checkout." }, { status: 400 });
+    }
+    await setCheckoutEnabled(Boolean(body.enabled));
     return Response.json({ ok: true });
   }
   return Response.json({ error: "Unknown action" }, { status: 400 });
