@@ -1,0 +1,3 @@
+export default function CheckoutSuccess() {
+  return <main style={{ minHeight:"100vh",display:"grid",placeItems:"center",background:"#090909",color:"#ece8df",padding:24,textAlign:"center" }}><div><p style={{color:"#c8a369",letterSpacing:".2em",fontSize:11}}>JEWELRY DEPT.</p><h1 style={{fontFamily:"Georgia, serif",fontWeight:400,fontSize:"clamp(48px,8vw,90px)",margin:"20px 0"}}>Payment received.</h1><p style={{color:"#999",lineHeight:1.8}}>Your piece is secured. A receipt and order confirmation are on the way.</p><a href="/" style={{display:"inline-block",marginTop:30,padding:"16px 24px",background:"#ece8df",color:"#090909",fontSize:11,letterSpacing:".12em"}}>RETURN TO STORE</a></div></main>;
+}
