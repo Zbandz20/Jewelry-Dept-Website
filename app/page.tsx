@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 
 const products = [
   { id: 1, name: "La Corona", detail: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, tag: "DROP 05" },
@@ -63,7 +63,7 @@ export default function Home() {
 
       <nav className="nav">
         <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation">MENU</button>
-        <Logo />
+        <Logo clipId="navJewelryLogo" />
         <div className={`navlinks ${menu ? "open" : ""}`}>
           <a href="#drop" onClick={() => setMenu(false)}>THE DROP</a>
           <a href="#pieces" onClick={() => setMenu(false)}>PIECES</a>
@@ -181,7 +181,7 @@ export default function Home() {
       </div>}
 
       <footer>
-        <Logo />
+        <Logo clipId="footerJewelryLogo" />
         <p>Fire without compromise.<br />Solid gold. Certified stones. Set by hand.</p>
         <div><a href="#pieces">SHOP</a><a href="#custom">CUSTOM</a><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
         <small>© 2026 JEWELRY DEPT. · ALL RIGHTS RESERVED</small>
@@ -198,8 +198,7 @@ function Compare({ label, a, b }: { label: string; a: string; b: string }) {
   return <div className="compareRow"><span>{label}</span><strong>{a}</strong><span>{b}</span></div>;
 }
 
-function Logo() {
-  const clipId = useId();
+function Logo({ clipId }: { clipId: string }) {
   return (
     <a className="wordmark" href="#" aria-label="Jewelry Dept. home">
       <svg className="logoSvg" viewBox="0 0 430 112" role="presentation" aria-hidden="true">
