@@ -35,8 +35,19 @@ export async function POST(request: Request) {
         price = ${Number(body.price || 0)},
         inventory = ${Number(body.inventory || 0)},
         active = ${Boolean(body.active)},
+        image_url = ${String(body.image_url || "")},
+        description = ${String(body.description || "")},
         updated_at = NOW()
       WHERE id = ${Number(body.id)}
+      RETURNING *
+    `;
+    return Response.json({ product });
+  }
+
+  if (body.type === "product-create") {
+    const [product] = await sql`
+      INSERT INTO jd_products (name, sku, price, inventory, active, image_url, description)
+      VALUES (${String(body.name || "New product")}, ${String(body.sku || "")}, ${Number(body.price || 0)}, ${Number(body.inventory || 0)}, FALSE, '', '')
       RETURNING *
     `;
     return Response.json({ product });
