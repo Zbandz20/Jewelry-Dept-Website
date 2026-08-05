@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import "./admin.css";
 import "./security.css";
+import "./catalog.css";
 
 type DashboardData = {
   summary: { total_orders: number; gross: number; live_visitors: number; visitors_today: number; average_order: number };
-  products: Array<{ id: number; name: string; sku: string; price: number; inventory: number; active: boolean }>;
-  orders: Array<{ id: number; customer_name: string; customer_email: string; total: number; status: string; created_at: string }>;
+  products: Array<{ id: number; name: string; sku: string; price: number; inventory: number; active: boolean; image_url: string; description: string }>;
+  orders: Array<{ id: number; customer_name: string; customer_email: string; total: number; status: string; created_at: string; shipping_address?: { address?: Record<string,string> }; label_url?: string; tracking_number?: string; tracking_url?: string }>;
   assets: Array<{ id: string; label: string; data_url: string; updated_at: string }>;
   checkoutEnabled: boolean;
   stripeReady: boolean;
@@ -52,6 +53,14 @@ export default function AdminPhotos() {
     setSaving(""); await load();
   }
 
+  async function addProduct() {
+    setSaving("new-product");
+    const response = await fetch("/api/admin/dashboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "product-create", name: `New product ${Date.now().toString().slice(-4)}` }) });
+    setSaving("");
+    if (!response.ok) return setError("A product could not be added.");
+    await load();
+  }
+
   async function upload(id: string, file?: File) {
     if (!file) return;
     if (file.size > 2_800_000) return setError("Please choose an image smaller than 2.8 MB.");
@@ -85,29 +94,61 @@ export default function AdminPhotos() {
     const response = await fetch("/api/admin/recovery", { cache: "no-store" });
     const result = await response.json();
     if (!response.ok) return setError(result.error || "Password recovery is not available.");
-    setSecurityQuestion(result.question); setRecoveryMode(true);
+    setSecurityQuestion(result.question);
+    setRecoveryMode(true);
   }
+
   async function recoverPassword(event: React.FormEvent) {
-    event.preventDefault(); setError("");
+    event.preventDefault();
+    setError("");
     if (newPassword !== confirmPassword) return setError("New passwords do not match.");
-    const response = await fetch("/api/admin/recovery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answer: securityAnswer, newPassword }) });
+    const response = await fetch("/api/admin/recovery", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answer: securityAnswer, newPassword }),
+    });
     const result = await response.json();
     if (!response.ok) return setError(result.error || "Password could not be reset.");
-    setSecurityAnswer(""); setNewPassword(""); setConfirmPassword(""); await load();
+    setSecurityAnswer(""); setNewPassword(""); setConfirmPassword("");
+    await load();
   }
+
   async function saveRecoveryQuestion(event: React.FormEvent) {
-    event.preventDefault(); setSecurityMessage("");
-    const response = await fetch("/api/admin/security", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: securityQuestion, answer: securityAnswer }) });
+    event.preventDefault();
+    setSecurityMessage("");
+    const response = await fetch("/api/admin/security", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: securityQuestion, answer: securityAnswer }),
+    });
     const result = await response.json();
     if (!response.ok) return setSecurityMessage(result.error || "Security question could not be saved.");
-    setSecurityAnswer(""); setSecurityMessage("Security question saved successfully.");
+    setSecurityAnswer("");
+    setSecurityMessage("Security question saved successfully.");
   }
+
   async function toggleCheckout() {
-    if (!data) return; setSaving("checkout");
-    const response = await fetch("/api/admin/dashboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "checkout-toggle", enabled: !data.checkoutEnabled }) });
-    const result = await response.json(); setSaving("");
+    if (!data) return;
+    setSaving("checkout");
+    const response = await fetch("/api/admin/dashboard", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "checkout-toggle", enabled: !data.checkoutEnabled }),
+    });
+    const result = await response.json();
+    setSaving("");
     if (!response.ok) return setError(result.error || "Checkout could not be updated.");
     setError(""); await load();
+  }
+
+  async function createLabel(orderId: number) {
+    setSaving(`label-${orderId}`); setError("");
+    const quoteResponse = await fetch("/api/admin/shipping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "quote", orderId }) });
+    const quote = await quoteResponse.json();
+    if (!quoteResponse.ok) { setSaving(""); return setError(quote.error || "Shipping rates are not available."); }
+    const approved = window.confirm(`Buy a ${quote.provider} ${quote.service} label for $${Number(quote.amount).toFixed(2)}?`);
+    if (!approved) { setSaving(""); return; }
+    const buyResponse = await fetch("/api/admin/shipping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "purchase", orderId, rateId: quote.rateId }) });
+    const result = await buyResponse.json(); setSaving("");
+    if (!buyResponse.ok) return setError(result.error || "The label could not be purchased.");
+    await load(); window.open(result.labelUrl, "_blank", "noopener,noreferrer");
   }
 
   if (!data && recoveryMode) return (
@@ -121,7 +162,8 @@ export default function AdminPhotos() {
         <input id="recovery-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={10} required />
         <label htmlFor="recovery-confirm">Confirm new password</label>
         <input id="recovery-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={10} required />
-        {error && <small>{error}</small>}<button>RESET PASSWORD</button>
+        {error && <small>{error}</small>}
+        <button>RESET PASSWORD</button>
         <button className="textButton" type="button" onClick={() => { setRecoveryMode(false); setError(""); }}>BACK TO SIGN IN</button>
       </form>
     </main>
@@ -163,7 +205,7 @@ export default function AdminPhotos() {
         </>}
 
         {tab === "inventory" && <div className="adminPanel">
-          <div className="panelHead"><div><p>PRODUCT CATALOG</p><h2>Inventory & pricing</h2></div><span>Changes update your management database</span></div>
+          <div className="panelHead"><div><p>PRODUCT CATALOG</p><h2>Products, photos & inventory</h2></div><button className="adminAction" onClick={addProduct}>{saving === "new-product" ? "ADDING…" : "+ ADD PRODUCT"}</button></div>
           <div className="productRows">{data.products.map((product, index) => <ProductRow product={product} setData={setData} index={index} save={() => saveProduct(data.products[index])} saving={saving === `product-${product.id}`} key={product.id} />)}</div>
         </div>}
 
@@ -178,7 +220,7 @@ export default function AdminPhotos() {
 
         {tab === "orders" && <div className="adminPanel">
           <div className="panelHead"><div><p>SALES</p><h2>Recent orders</h2></div><span>{data.orders.length} records shown</span></div>
-          {data.orders.length ? <div className="orderTable">{data.orders.map(order => <div key={order.id}><b>#{order.id}</b><span>{order.customer_name}<small>{order.customer_email}</small></span><span>{new Date(order.created_at).toLocaleDateString()}</span><strong>{money(order.total)}</strong><em>{order.status}</em></div>)}</div> : <div className="emptyState"><b>No orders recorded yet.</b><p>Orders will appear here when checkout is connected.</p></div>}
+          {data.orders.length ? <div className="orderTable">{data.orders.map(order => <div key={order.id}><b>#{order.id}</b><span>{order.customer_name}<small>{order.customer_email}</small></span><span>{new Date(order.created_at).toLocaleDateString()}</span><strong>{money(order.total)}</strong><span className="labelActions">{order.label_url ? <a href={order.label_url} target="_blank">PRINT LABEL</a> : <button disabled={saving === `label-${order.id}`} onClick={() => createLabel(order.id)}>{saving === `label-${order.id}` ? "LOADING…" : "GET LABEL"}</button>}{order.tracking_number && <small>{order.tracking_number}</small>}</span></div>)}</div> : <div className="emptyState"><b>No orders recorded yet.</b><p>Orders will appear here when checkout is connected.</p></div>}
         </div>}
 
         {tab === "checkout" && <div className="adminPanel checkoutPanel">
@@ -191,7 +233,8 @@ export default function AdminPhotos() {
           {error && <small className="panelError">{error}</small>}
         </div>}
 
-        {tab === "security" && <div className="securityStack"><div className="adminPanel securityPanel">
+        {tab === "security" && <div className="securityStack">
+        <div className="adminPanel securityPanel">
           <div className="panelHead"><div><p>MANAGEMENT ACCESS</p><h2>Set a new password</h2></div><span>Your password is encrypted before storage</span></div>
           <form onSubmit={changePassword}>
             <label>New password<input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={10} autoComplete="new-password" /></label>
@@ -208,7 +251,8 @@ export default function AdminPhotos() {
             <small className={securityMessage.includes("successfully") ? "success" : ""}>{securityMessage || "Answers are not case-sensitive."}</small>
             <button>SAVE SECURITY QUESTION</button>
           </form>
-        </div></div>}
+        </div>
+        </div>}
       </section>
     </main>
   );
@@ -224,11 +268,13 @@ function ProductRow({ product, setData, index, save, saving }: { product: Dashbo
     const products = [...current.products]; products[index] = { ...products[index], [key]: value };
     return { ...current, products };
   });
+  const uploadProductImage = (file?: File) => { if (!file || file.size > 2_800_000) return; const reader = new FileReader(); reader.onload = () => change("image_url", String(reader.result)); reader.readAsDataURL(file); };
   return <div className="productRow">
-    <input value={product.name} onChange={e => change("name", e.target.value)} aria-label="Product name" />
-    <input value={product.sku} onChange={e => change("sku", e.target.value)} aria-label="SKU" />
-    <label>$<input type="number" value={product.price} onChange={e => change("price", Number(e.target.value))} aria-label="Price" /></label>
-    <label>QTY<input type="number" value={product.inventory} onChange={e => change("inventory", Number(e.target.value))} aria-label="Inventory" /></label>
+    <div className="productThumb" style={{backgroundImage:`url(${product.image_url || "/images/cuban.jpg"})`}}><label>PHOTO<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => uploadProductImage(e.target.files?.[0])}/></label></div>
+    <div className="productFields"><input value={product.name} onChange={e => change("name", e.target.value)} aria-label="Product name" /><input value={product.sku} onChange={e => change("sku", e.target.value)} aria-label="SKU" /><textarea value={product.description || ""} onChange={e => change("description", e.target.value)} placeholder="Product description" /></div>
+    <label>$<input type="number" min="0" value={product.price} onChange={e => change("price", Number(e.target.value))} aria-label="Price" /></label>
+    <label>QTY<input type="number" min="0" value={product.inventory} onChange={e => change("inventory", Number(e.target.value))} aria-label="Inventory" /></label>
+    <label className="activeToggle"><input type="checkbox" checked={product.active} onChange={e => change("active", e.target.checked)} />VISIBLE</label>
     <button onClick={save}>{saving ? "SAVING…" : "SAVE"}</button>
   </div>;
 }
