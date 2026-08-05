@@ -106,9 +106,11 @@ export async function ensureAdminTables() {
       inventory INTEGER NOT NULL DEFAULT 0,
       active BOOLEAN NOT NULL DEFAULT TRUE,
       image_url TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql`ALTER TABLE jd_products ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''`;
   await sql`
     CREATE TABLE IF NOT EXISTS jd_orders (
       id SERIAL PRIMARY KEY,
@@ -120,6 +122,10 @@ export async function ensureAdminTables() {
     )
   `;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS stripe_session_id TEXT`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS shipping_address JSONB`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS label_url TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS tracking_number TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS tracking_url TEXT NOT NULL DEFAULT ''`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS jd_orders_stripe_session_idx ON jd_orders(stripe_session_id) WHERE stripe_session_id IS NOT NULL`;
   await sql`
     CREATE TABLE IF NOT EXISTS jd_assets (
