@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-const products = [
-  { id: 1, name: "La Corona", detail: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, tag: "DROP 05" },
-  { id: 2, name: "La Cadena", detail: "10mm Cuban · VVS moissanite · 14k gold", price: 1290, tag: "MADE TO ORDER" },
-  { id: 3, name: "Solitario", detail: "2ct round · D color · 14k white gold", price: 890, tag: "BEST SELLER" },
-  { id: 4, name: "La Cruz", detail: "Full pavé · moissanite · 14k gold", price: 980, tag: "WITH BLESSING" },
+type Product = { id: number; name: string; description: string; price: number; inventory: number; image_url: string };
+const fallbackProducts: Product[] = [
+  { id: 1, name: "La Corona", description: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, inventory: 0, image_url: "/images/cuban.jpg" },
 ];
 
 export default function Home() {
@@ -18,11 +16,14 @@ export default function Home() {
   const [checkoutEnabled, setCheckoutEnabled] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [products, setProducts] = useState<Product[]>(fallbackProducts);
   const cart = cartItems.length;
+  const featuredProduct = products[0] || fallbackProducts[0];
 
   useEffect(() => {
     fetch("/api/site-content").then(response => response.ok ? response.json() : null).then(content => {
       if (content?.assets) setSiteImages(current => ({ ...current, ...content.assets }));
+      if (Array.isArray(content?.products) && content.products.length) setProducts(content.products.map((product: Product) => ({ ...product, price: Number(product.price), inventory: Number(product.inventory) })));
       setCheckoutEnabled(Boolean(content?.checkoutEnabled));
     }).catch(() => {});
     const storageKey = "jd-session";
@@ -103,18 +104,18 @@ export default function Home() {
 
       <section className="featured" id="drop">
         <div className="productVisual">
-          <img src={siteImages.featured} alt="La Corona iced Cuban-link chain in yellow gold" />
+          <img src={featuredProduct.image_url || siteImages.featured} alt={featuredProduct.name} />
           <span className="dropTag">DROP 05 · LIMITED</span>
         </div>
         <div className="featuredInfo">
           <p className="eyebrow">FEATURED — THE DROP</p>
-          <h2>La Corona<br /><em>Cuban 12mm</em></h2>
-          <p>Six hundred hand-set stones on a spine of solid gold. Heavy on the neck, heavier in the room. Built to outlive you.</p>
+          <h2>{featuredProduct.name}</h2>
+          <p>{featuredProduct.description || "Hand-finished jewelry, made to stand out."}</p>
           <Option label="Stone" items={["Moissanite", "Lab Diamond", "Natural"]} value={stone} setValue={setStone} />
           <Option label="Gold" items={["10K", "14K", "18K", "24K"]} value={gold} setValue={setGold} />
           <div className="buyRow">
-            <div><small>FROM</small><strong>$1,450</strong></div>
-            <button onClick={() => setCartItems(items => [...items, 1])}>ADD TO BAG — SHIPS FREE</button>
+            <div><small>FROM</small><strong>${featuredProduct.price.toLocaleString()}</strong></div>
+            <button disabled={featuredProduct.inventory < 1} onClick={() => setCartItems(items => [...items, featuredProduct.id])}>{featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG — SHIPS FREE"}</button>
           </div>
           <div className="assurances"><span>✓ CERTIFIED STONES</span><span>✓ 30-DAY RETURNS</span><span>✓ LIFETIME SERVICE</span></div>
         </div>
@@ -126,12 +127,12 @@ export default function Home() {
           {products.map((product, index) => (
             <article className="card" key={product.name}>
               <div className={`cardImage crop${index + 1}`}>
-                <img src={siteImages.featured} alt="" />
-                <span>{product.tag}</span>
+                <img src={product.image_url || siteImages.featured} alt={product.name} />
+                <span>{product.inventory > 0 ? `${product.inventory} AVAILABLE` : "SOLD OUT"}</span>
               </div>
               <div className="cardTop"><h3>{product.name}</h3><strong>${product.price.toLocaleString()}</strong></div>
-              <p>{product.detail}</p>
-              <button onClick={() => setCartItems(items => [...items, product.id])}>ADD TO BAG <span>+</span></button>
+              <p>{product.description || "Hand-finished by Jewelry Dept."}</p>
+              <button disabled={product.inventory < 1} onClick={() => setCartItems(items => [...items, product.id])}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "+"}</span></button>
             </article>
           ))}
         </div>
