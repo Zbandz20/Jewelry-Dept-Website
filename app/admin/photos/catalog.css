@@ -1,0 +1,14 @@
+.productRow { grid-template-columns:90px 1.5fr .55fr .55fr .55fr auto; align-items:center; gap:10px; padding:12px; }
+.productRow input,.productRow textarea { width:100%; background:#171717; border:1px solid #2b2b2b; color:white; padding:11px; resize:vertical; }
+.productFields { display:grid; grid-template-columns:1fr .65fr; gap:7px; }
+.productFields textarea { grid-column:1/-1; min-height:58px; }
+.productThumb { height:92px; background:center/cover no-repeat; display:grid; place-items:end center; }
+.productThumb label { background:#111; color:white; padding:6px; width:100%; justify-content:center; cursor:pointer; }
+.productThumb input { display:none; }
+.activeToggle { justify-content:center; flex-direction:column; }
+.activeToggle input { width:auto; }
+.adminAction,.labelActions button,.labelActions a { background:#eee9df; color:#111; border:0; font-size:9px; letter-spacing:.12em; font-weight:bold; padding:13px 18px; display:inline-grid; place-items:center; cursor:pointer; }
+.labelActions { display:grid; gap:5px; }
+.labelActions small { word-break:break-all; }
+@media(max-width:1100px) { .productRow { grid-template-columns:80px 1fr 1fr; } .productFields { grid-column:span 2; } }
+@media(max-width:560px) { .productRow { grid-template-columns:1fr; } .productFields { grid-column:auto; } }
