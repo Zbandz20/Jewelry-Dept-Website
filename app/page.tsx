@@ -202,7 +202,7 @@ function Compare({ label, a, b }: { label: string; a: string; b: string }) {
 function Logo({ clipId: _clipId }: { clipId: string }) {
   return (
     <a className="wordmark" href="#" aria-label="Jewelry Dept. home">
-      <img src="/images/jewelry-dept-shopify-logo.webp" alt="" aria-hidden="true" />
+      <img src="/images/jewelry-dept-shopify-logo-transparent.png" alt="" aria-hidden="true" />
     </a>
   );
 }
