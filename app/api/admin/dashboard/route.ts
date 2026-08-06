@@ -1,4 +1,4 @@
-import { ensureAdminTables, getCheckoutEnabled, getSql, isAdmin, setCheckoutEnabled } from "@/lib/admin";
+import { ensureAdminTables, getCheckoutEnabled, getSql, isAdmin, setCheckoutEnabled, verifyAdminPassword } from "@/lib/admin";
 
 const shopifyStorefrontProducts = [
   ["6mm Moissanite Cuban Bracelet",250,"AAD37993-02AD-4948-BF25-D7A330AC1D91.jpg?v=1772470224",true],
@@ -41,7 +41,8 @@ export async function GET() {
   const products = await sql`SELECT * FROM jd_products ORDER BY id`;
   const orders = await sql`SELECT * FROM jd_orders ORDER BY created_at DESC LIMIT 25`;
   const assets = await sql`SELECT id, label, data_url, updated_at FROM jd_assets ORDER BY id`;
-  return Response.json({ summary, products, orders, assets, checkoutEnabled: await getCheckoutEnabled(), stripeReady: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET) });
+  const customRequests = await sql`SELECT * FROM jd_custom_requests ORDER BY created_at DESC LIMIT 100`;
+  return Response.json({ summary, products, orders, assets, customRequests, checkoutEnabled: await getCheckoutEnabled(), stripeReady: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET) });
 }
 
 export async function POST(request: Request) {
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
     let imported = 0;
     for (const item of items) {
       const variant = Array.isArray(item.variants) ? item.variants[0] : null;
-      const image = Array.isArray(item.images) ? item.images[0]?.src : "";
+      const image = Array.isArray(item.images) ? item.images[0]?.src : item.image?.src;
       const description = String(item.body_html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 1200);
       const imageFile = String(image || "").split("/").pop()?.split("?")[0] || "";
       if (imageFile) await sql`UPDATE jd_products SET name = ${String(item.title)} WHERE image_url LIKE ${`%${imageFile}%`} AND name <> ${String(item.title)}`;
@@ -119,6 +120,27 @@ export async function POST(request: Request) {
   if (body.type === "order-status") {
     await sql`UPDATE jd_orders SET status = ${String(body.status)} WHERE id = ${Number(body.id)}`;
     return Response.json({ ok: true });
+  }
+  if (body.type === "custom-request-decision") {
+    const id = Number(body.id);
+    const decision = String(body.decision || "");
+    const confirmation = String(body.confirmation || "").trim().toUpperCase();
+    if (!Number.isInteger(id) || !["approved", "declined"].includes(decision)) return Response.json({ error: "Invalid request decision." }, { status: 400 });
+    if (!(await verifyAdminPassword(String(body.password || "")))) return Response.json({ error: "Dashboard password is incorrect." }, { status: 401 });
+    const required = `${decision === "approved" ? "APPROVE" : "DECLINE"} ${id}`;
+    if (confirmation !== required) return Response.json({ error: `Type ${required} to complete the second verification.` }, { status: 400 });
+    const approvedTotal = decision === "approved" ? Number(body.approvedTotal) : null;
+    if (decision === "approved" && (!Number.isFinite(approvedTotal) || approvedTotal <= 0)) return Response.json({ error: "Enter a valid approved total." }, { status: 400 });
+    const [customRequest] = await sql`
+      UPDATE jd_custom_requests SET
+        status = ${decision},
+        approved_total = ${approvedTotal},
+        approved_at = ${decision === "approved" ? new Date().toISOString() : null}
+      WHERE id = ${id} AND status = 'pending'
+      RETURNING *
+    `;
+    if (!customRequest) return Response.json({ error: "This request was already reviewed or could not be found." }, { status: 409 });
+    return Response.json({ customRequest });
   }
   if (body.type === "checkout-toggle") {
     if (Boolean(body.enabled) && (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET)) {
