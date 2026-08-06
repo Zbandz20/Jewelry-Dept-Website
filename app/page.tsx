@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 type Product = { id: number; name: string; description: string; price: number; inventory: number; image_url: string };
 const fallbackProducts: Product[] = [
-  { id: 1, name: "La Corona", description: "12mm Cuban · VVS moissanite · 14k gold", price: 1450, inventory: 0, image_url: "/images/cuban.jpg" },
+  { id: -1, name: "6mm Moissanite Cuban Bracelet", description: "Authentic 6mm Moissanite Cuban Bracelet from Jewelry Dept.", price: 250, inventory: 0, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/AAD37993-02AD-4948-BF25-D7A330AC1D91.jpg?v=1772470224&width=1200" },
 ];
 
 export default function Home() {
@@ -63,7 +63,7 @@ export default function Home() {
       </div>
 
       <nav className="nav">
-        <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation">MENU</button>
+        <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
         <Logo clipId="navJewelryLogo" />
         <div className={`navlinks ${menu ? "open" : ""}`}>
           <a href="#drop" onClick={() => setMenu(false)}>THE DROP</a>
