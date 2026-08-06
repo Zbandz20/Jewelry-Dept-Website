@@ -127,19 +127,38 @@ export default function Home() {
       </section>
 
       <section className="proof" id="proof">
-        <div>
-          <p className="eyebrow">04 / PROOF</p>
-          <h2>Moissanite<br /><em>outshines. Literally.</em></h2>
-          <p>Optically flawless, certified, and more brilliant than the diamond it’s mistaken for. Prefer the real thing? We set lab-grown and natural diamonds too.</p>
-          <a href="#custom">CHOOSE YOUR STONE →</a>
+        <div className="stoneIntro">
+          <p className="eyebrow">CHOOSE YOUR STONE</p>
+          <h2>Natural, lab<br /><em>or moissanite?</em></h2>
+          <p>Each option has its own look, story, and price point. Compare the details below and choose what matters most to you.</p>
         </div>
-        <div className="comparison">
-          <div className="compareHead"><span></span><strong>MOISSANITE</strong><strong>DIAMOND</strong></div>
-          <Compare label="Fire (dispersion)" a="0.104" b="0.044" />
-          <Compare label="Brilliance (RI)" a="2.65–2.69" b="2.42" />
-          <Compare label="Hardness" a="9.25" b="10" />
-          <Compare label="Price per carat" a="~10%" b="100%" />
+        <div className="stoneCards">
+          <article>
+            <span>01</span><h3>Moissanite</h3>
+            <p>A lab-created gemstone known for intense brilliance and colorful fire. It is not a diamond, but it is exceptionally durable and gives the biggest visual impact for the price.</p>
+            <dl><div><dt>Hardness</dt><dd>9.25 Mohs</dd></div><div><dt>Look</dt><dd>Maximum rainbow fire</dd></div><div><dt>Best for</dt><dd>Bold sparkle and value</dd></div></dl>
+          </article>
+          <article>
+            <span>02</span><h3>Lab Diamond</h3>
+            <p>A real diamond grown in a controlled laboratory. It has the same carbon crystal structure, hardness, and optical properties as a mined diamond.</p>
+            <dl><div><dt>Hardness</dt><dd>10 Mohs</dd></div><div><dt>Look</dt><dd>Classic diamond brilliance</dd></div><div><dt>Best for</dt><dd>Diamond quality at a lower price</dd></div></dl>
+          </article>
+          <article>
+            <span>03</span><h3>Natural Diamond</h3>
+            <p>Created deep within the earth over billions of years and then mined. Every stone carries natural rarity, traditional prestige, and its own geological history.</p>
+            <dl><div><dt>Hardness</dt><dd>10 Mohs</dd></div><div><dt>Look</dt><dd>Classic diamond brilliance</dd></div><div><dt>Best for</dt><dd>Rarity, tradition, and provenance</dd></div></dl>
+          </article>
         </div>
+        <div className="stoneTable">
+          <div className="stoneTableHead"><strong>DETAIL</strong><strong>MOISSANITE</strong><strong>LAB DIAMOND</strong><strong>NATURAL DIAMOND</strong></div>
+          <div><span>Origin</span><b>Created in a lab</b><b>Grown in a lab</b><b>Formed in the earth</b></div>
+          <div><span>Material</span><b>Silicon carbide</b><b>Crystallized carbon</b><b>Crystallized carbon</b></div>
+          <div><span>Sparkle</span><b>Most colorful fire</b><b>Classic diamond fire</b><b>Classic diamond fire</b></div>
+          <div><span>Durability</span><b>Excellent for daily wear</b><b>Highest hardness</b><b>Highest hardness</b></div>
+          <div><span>Price profile</span><b>Most accessible</b><b>Lower than natural</b><b>Premium for rarity</b></div>
+        </div>
+        <p className="stoneNote">Prices vary by size, cut, color, clarity, metal, and setting. We can source and set all three options for custom pieces.</p>
+        <a className="primary stoneCta" href="#custom">START A CUSTOM PIECE</a>
       </section>
 
       <section className="custom" id="custom">
