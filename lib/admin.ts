@@ -155,6 +155,25 @@ export async function ensureAdminTables() {
     `;
   }
   await sql`
+    UPDATE jd_products SET
+      name = CASE name
+        WHEN 'La Corona' THEN '12mm Cuban Chain'
+        WHEN 'La Cadena' THEN '10mm Cuban Chain'
+        WHEN 'Solitario' THEN '2ct Solitaire Ring'
+        WHEN 'La Cruz' THEN 'Pavé Cross Pendant'
+        ELSE name
+      END,
+      description = CASE name
+        WHEN 'La Corona' THEN '12mm Cuban chain with hand-set stones.'
+        WHEN 'La Cadena' THEN '10mm Cuban chain with hand-set stones.'
+        WHEN 'Solitario' THEN '2ct round solitaire ring.'
+        WHEN 'La Cruz' THEN 'Full pavé cross pendant.'
+        ELSE description
+      END,
+      updated_at = NOW()
+    WHERE name IN ('La Corona', 'La Cadena', 'Solitario', 'La Cruz')
+  `;
+  await sql`
     INSERT INTO jd_assets (id, label, data_url) VALUES
     ('hero', 'Homepage hero', ''),
     ('featured', 'Featured Cuban chain', '')
