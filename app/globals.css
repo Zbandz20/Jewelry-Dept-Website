@@ -196,3 +196,40 @@ footer small { color:#77716a; }
 .checkoutBar { background:#fff; color:#111; border-color:#cfc8bd; box-shadow:0 18px 60px rgba(0,0,0,.18); }
 .checkoutBar button { background:#111; color:#fff; }
 @media (max-width:900px) { .navlinks { background:#fffdf8; color:#111; box-shadow:0 16px 28px rgba(0,0,0,.12); } }
+
+
+/* SHOPIFY-INSPIRED CATALOG */
+main { display:flex; flex-direction:column; background:#fff; }
+.ticker { display:none; }
+.nav { order:1; position:relative; top:auto; height:270px; padding:0 6vw; background:#fff; border:0; box-shadow:none; grid-template-columns:1fr auto 1fr; }
+.nav>.wordmark { width:300px; height:150px; max-width:45vw; }
+.navlinks { gap:22px; font-size:10px; }
+.cart { color:#111; }
+.pieces { order:2; padding:35px 6vw 120px; background:#fff; }
+.sectionHeading { margin:0 0 45px; text-align:center; }
+.sectionHeading .eyebrow { display:none; }
+.sectionHeading h2 { font-family:'Jost',sans-serif; font-size:clamp(28px,4vw,48px); font-weight:600; letter-spacing:-.03em; }
+.sectionHeading h2 em { color:#111; font-style:normal; }
+.productGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:70px 20px; max-width:1200px; margin:0 auto; }
+.card { padding:0; border:0; box-shadow:none; background:#fff; transition:opacity .25s ease; }
+.card:hover { transform:none; box-shadow:none; opacity:.88; }
+.cardImage { height:auto; aspect-ratio:1/1; border-radius:18px; background:#f4f4f4; }
+.cardImage img,.crop2 img,.crop3 img,.crop4 img { width:100%; height:100%; object-fit:cover; object-position:center; transform:none; filter:none; }
+.cardImage span { top:16px; left:16px; background:#fff; color:#111; border-radius:999px; box-shadow:0 3px 14px rgba(0,0,0,.12); }
+.cardTop { margin-top:17px; align-items:start; }
+.card h3 { font-family:'Jost',sans-serif; font-size:15px; font-weight:400; letter-spacing:.01em; }
+.cardTop strong { color:#111; font-size:16px; font-weight:500; white-space:nowrap; }
+.card>p { margin:8px 0 0; font-size:12px; color:#666; }
+.card>button { margin-top:16px; width:auto; min-width:150px; padding:13px 18px; border-radius:999px; }
+.hero { order:3; min-height:620px; height:72vh; margin:0 6vw 100px; border-radius:20px; }
+.heroCopy { padding-left:6vw; }
+.manifesto { order:4; }
+.mexicoMarquee { order:5; }
+.featured { order:6; margin:0 6vw 100px; border:1px solid #ddd; border-radius:20px; overflow:hidden; }
+.proof { order:7; }
+.custom { order:8; }
+.signup { order:9; }
+footer { order:10; }
+.checkoutBar { order:11; }
+@media(max-width:900px) { .nav { height:210px; } .nav>.wordmark { width:240px; height:125px; } }
+@media(max-width:600px) { .nav { height:175px; top:auto; padding:0 18px; } .nav>.wordmark { width:190px; height:105px; max-width:52vw; } .productGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:40px 12px; } .pieces { padding:20px 14px 80px; } .cardImage { border-radius:12px; } .card h3 { font-size:12px; } .cardTop { display:block; } .cardTop strong { display:block; margin-top:5px; font-size:13px; } .card>p,.card>button { display:none; } .hero { margin:0 14px 70px; min-height:560px; border-radius:14px; } .featured { margin:0 14px 70px; border-radius:14px; } }
