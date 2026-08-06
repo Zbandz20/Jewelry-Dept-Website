@@ -63,14 +63,16 @@ export default function Home() {
       </div>
 
       <nav className="nav">
-        <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
-        <Logo clipId="navJewelryLogo" />
-        <div className={`navlinks ${menu ? "open" : ""}`}>
-          <a href="#drop" onClick={() => setMenu(false)}>THE DROP</a>
-          <a href="#pieces" onClick={() => setMenu(false)}>PIECES</a>
-          <a href="#custom" onClick={() => setMenu(false)}>CUSTOM</a>
-          <a href="#proof" onClick={() => setMenu(false)}>THE STONE</a>
+        <div className="menuCluster">
+          <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
+          <div className={`navlinks ${menu ? "open" : ""}`}>
+            <a href="#drop" onClick={() => setMenu(false)}>THE DROP</a>
+            <a href="#pieces" onClick={() => setMenu(false)}>PIECES</a>
+            <a href="#custom" onClick={() => setMenu(false)}>CUSTOM</a>
+            <a href="#proof" onClick={() => setMenu(false)}>THE STONE</a>
+          </div>
         </div>
+        <Logo clipId="navJewelryLogo" />
         <a className="cart" href="#pieces">BAG <span>{cart}</span></a>
       </nav>
 
