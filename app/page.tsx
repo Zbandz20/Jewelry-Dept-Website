@@ -53,7 +53,7 @@ export default function Home() {
         <div className="tickerTrack">
           {[0, 1].map((copy) => (
             <div className="tickerGroup" aria-hidden={copy === 1} key={copy}>
-              <span>WE DO CUSTOM JEWELRY</span><b>◆</b>
+              <span>CUSTOMS</span><b>◆</b>
               <span>925 SILVER · 10K · 14K · 18K · 24K GOLD</span><b>◆</b>
               <span>NATURAL DIAMONDS · LAB DIAMONDS · MOISSANITE</span><b>◆</b>
               <span>MADE TO ORDER</span><b>◆</b>
