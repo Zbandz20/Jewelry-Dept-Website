@@ -332,3 +332,33 @@ footer a,footer small { color:var(--shopify-blue); }
   .tickerTrack { animation-duration:28s; }
   .tickerGroup span,.tickerGroup b { padding-left:34px; }
 }
+
+
+/* DETAILED STONE COMPARISON — DIRECTLY AFTER PRODUCTS */
+.proof { order:3; display:block; padding:110px 6vw; background:#f4fbff; color:#111; }
+.stoneIntro { max-width:760px; margin-bottom:52px; }
+.stoneIntro h2 { font-size:clamp(44px,6vw,78px); }
+.stoneIntro>p:last-child { max-width:640px; color:#4d5b63; line-height:1.75; }
+.stoneCards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.stoneCards article { background:#fff; border:1px solid #d6eaf4; border-radius:18px; padding:30px; box-shadow:0 14px 36px rgba(36,95,125,.07); }
+.stoneCards article>span { color:var(--shopify-blue); font-size:10px; font-weight:600; letter-spacing:.18em; }
+.stoneCards h3 { margin:18px 0 12px; font-family:'Libre Caslon Text',serif; font-size:31px; font-weight:400; }
+.stoneCards p { min-height:112px; color:#56636a; font-size:13px; line-height:1.7; }
+.stoneCards dl { margin:24px 0 0; }
+.stoneCards dl div { display:flex; justify-content:space-between; gap:18px; padding:12px 0; border-top:1px solid #e4eff4; }
+.stoneCards dt { color:#718089; font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+.stoneCards dd { margin:0; color:#1f658b; font-size:11px; font-weight:600; text-align:right; }
+.stoneTable { margin-top:36px; border:1px solid #cfe4ef; border-radius:18px; overflow:hidden; background:#fff; }
+.stoneTable>div { display:grid; grid-template-columns:1.05fr repeat(3,1fr); gap:18px; padding:18px 22px; border-top:1px solid #e0edf3; align-items:center; }
+.stoneTable>.stoneTableHead { border-top:0; background:#dff2fb; }
+.stoneTable strong { color:#246f96; font-size:10px; letter-spacing:.09em; }
+.stoneTable span { color:#4e5c64; font-size:12px; font-weight:600; }
+.stoneTable b { font-size:12px; font-weight:400; }
+.stoneNote { margin:24px 0; color:#66757d; font-size:11px; line-height:1.6; }
+.stoneCta { background:#111; color:#fff; border-radius:999px; }
+@media(max-width:900px) { .stoneCards { grid-template-columns:1fr; } .stoneCards p { min-height:0; } }
+@media(max-width:700px) {
+  .proof { padding:80px 18px; }
+  .stoneTable { overflow-x:auto; }
+  .stoneTable>div { min-width:720px; }
+}
