@@ -10,6 +10,7 @@ type DashboardData = {
   products: Array<{ id: number; name: string; sku: string; price: number; inventory: number; active: boolean; image_url: string; description: string }>;
   orders: Array<{ id: number; customer_name: string; customer_email: string; total: number; status: string; created_at: string; shipping_address?: { address?: Record<string,string> }; label_url?: string; tracking_number?: string; tracking_url?: string }>;
   assets: Array<{ id: string; label: string; data_url: string; updated_at: string }>;
+  customRequests: Array<{ id: number; customer_name: string; customer_email: string; customer_phone: string; description: string; karat: string; grams: number; stone: string; complexity: string; spot_price: number; metal_cost: number; metal_allowance: number; craftsmanship: number; estimated_total: number; approved_total?: number; status: string; created_at: string }>;
   checkoutEnabled: boolean;
   stripeReady: boolean;
 };
@@ -27,6 +28,9 @@ export default function AdminPhotos() {
   const [securityQuestion, setSecurityQuestion] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
+  const [approvalPassword, setApprovalPassword] = useState("");
+  const [approvalPhrase, setApprovalPhrase] = useState("");
+  const [approvedTotal, setApprovedTotal] = useState<Record<number, number>>({});
 
   async function load() {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
@@ -159,6 +163,17 @@ export default function AdminPhotos() {
     await load(); window.open(result.labelUrl, "_blank", "noopener,noreferrer");
   }
 
+  async function decideCustomRequest(id: number, decision: "approved" | "declined") {
+    setSaving(`custom-${id}`); setError("");
+    const response = await fetch("/api/admin/dashboard", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "custom-request-decision", id, decision, password: approvalPassword, confirmation: approvalPhrase, approvedTotal: approvedTotal[id] }),
+    });
+    const result = await response.json(); setSaving("");
+    if (!response.ok) return setError(result.error || "The request could not be updated.");
+    setApprovalPassword(""); setApprovalPhrase(""); await load();
+  }
+
   if (!data && recoveryMode) return (
     <main className="adminLogin">
       <form onSubmit={recoverPassword}>
@@ -196,7 +211,7 @@ export default function AdminPhotos() {
     <main className="adminShell">
       <aside>
         <div className="adminBrand"><span className="adminFlag"><i></i><i></i><i></i></span><b>JEWELRY<br />DEPT.</b></div>
-        <nav>{["overview", "inventory", "photos", "orders", "checkout", "security"].map((item) => <button className={tab === item ? "active" : ""} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
+        <nav>{["overview", "inventory", "photos", "orders", "custom requests", "checkout", "security"].map((item) => <button className={tab === item ? "active" : ""} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
         <a href="/" target="_blank">VIEW STOREFRONT ↗</a>
       </aside>
       <section className="adminMain">
@@ -230,6 +245,24 @@ export default function AdminPhotos() {
         {tab === "orders" && <div className="adminPanel">
           <div className="panelHead"><div><p>SALES</p><h2>Recent orders</h2></div><span>{data.orders.length} records shown</span></div>
           {data.orders.length ? <div className="orderTable">{data.orders.map(order => <div key={order.id}><b>#{order.id}</b><span>{order.customer_name}<small>{order.customer_email}</small></span><span>{new Date(order.created_at).toLocaleDateString()}</span><strong>{money(order.total)}</strong><span className="labelActions">{order.label_url ? <a href={order.label_url} target="_blank">PRINT LABEL</a> : <button disabled={saving === `label-${order.id}`} onClick={() => createLabel(order.id)}>{saving === `label-${order.id}` ? "LOADING…" : "GET LABEL"}</button>}{order.tracking_number && <small>{order.tracking_number}</small>}</span></div>)}</div> : <div className="emptyState"><b>No orders recorded yet.</b><p>Orders will appear here when checkout is connected.</p></div>}
+        </div>}
+
+        {tab === "custom requests" && <div className="adminPanel customRequestPanel">
+          <div className="panelHead"><div><p>GOLD QUOTE APPROVALS</p><h2>Custom piece requests</h2></div><span>{data.customRequests.filter(request => request.status === "pending").length} pending</span></div>
+          <div className="approvalNotice"><b>Double verification is required</b><p>Enter the dashboard password and the exact approval phrase shown on the request. No custom request can be purchased before approval.</p></div>
+          {error && <small className="panelError">{error}</small>}
+          {data.customRequests.length ? <div className="customRequestList">{data.customRequests.map(request => <article key={request.id}>
+            <div className="requestHead"><div><span>REQUEST #{request.id}</span><h3>{request.customer_name}</h3><p>{request.customer_email}{request.customer_phone ? ` · ${request.customer_phone}` : ""}</p></div><b className={`requestStatus ${request.status}`}>{request.status}</b></div>
+            <p className="requestDescription">{request.description}</p>
+            <div className="quoteBreakdown"><span>{request.karat} gold</span><span>{Number(request.grams)} grams</span><span>{request.stone}</span><span>{request.complexity}</span></div>
+            <dl><div><dt>Gold market at request</dt><dd>{money(Number(request.spot_price))}/oz</dd></div><div><dt>Pure metal value</dt><dd>{money(Number(request.metal_cost))}</dd></div><div><dt>15% sourcing & waste</dt><dd>{money(Number(request.metal_allowance))}</dd></div><div><dt>Craftsmanship</dt><dd>{money(Number(request.craftsmanship))}</dd></div><div><dt>Customer estimate</dt><dd>{money(Number(request.estimated_total))}</dd></div></dl>
+            {request.status === "pending" ? <div className="approvalControls">
+              <label>Final approved total<input type="number" min="1" value={approvedTotal[request.id] ?? Number(request.estimated_total)} onChange={event => setApprovedTotal(current => ({ ...current, [request.id]: Number(event.target.value) }))} /></label>
+              <label>Dashboard password<input type="password" value={approvalPassword} onChange={event => setApprovalPassword(event.target.value)} autoComplete="current-password" /></label>
+              <label>Second verification<input value={approvalPhrase} onChange={event => setApprovalPhrase(event.target.value)} placeholder={`Type APPROVE ${request.id}`} /></label>
+              <div><button disabled={saving === `custom-${request.id}`} onClick={() => decideCustomRequest(request.id, "approved")}>APPROVE REQUEST</button><button className="decline" disabled={saving === `custom-${request.id}`} onClick={() => decideCustomRequest(request.id, "declined")}>DECLINE</button></div>
+            </div> : <p className="decisionRecord">Reviewed {request.approved_total ? `· final total ${money(Number(request.approved_total))}` : ""}</p>}
+          </article>)}</div> : <div className="emptyState"><b>No custom requests yet.</b><p>New custom gold quote requests will appear here automatically.</p></div>}
         </div>}
 
         {tab === "checkout" && <div className="adminPanel checkoutPanel">
