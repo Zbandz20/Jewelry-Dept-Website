@@ -143,6 +143,29 @@ export async function ensureAdminTables() {
     )
   `;
   await sql`CREATE INDEX IF NOT EXISTS jd_visits_created_idx ON jd_visits(created_at)`;
+  await sql`
+    CREATE TABLE IF NOT EXISTS jd_custom_requests (
+      id SERIAL PRIMARY KEY,
+      customer_name TEXT NOT NULL,
+      customer_email TEXT NOT NULL,
+      customer_phone TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL,
+      karat TEXT NOT NULL,
+      grams NUMERIC(12,2) NOT NULL,
+      stone TEXT NOT NULL DEFAULT 'No stones',
+      complexity TEXT NOT NULL,
+      spot_price NUMERIC(12,2) NOT NULL,
+      purity NUMERIC(8,6) NOT NULL,
+      metal_cost NUMERIC(12,2) NOT NULL,
+      metal_allowance NUMERIC(12,2) NOT NULL,
+      craftsmanship NUMERIC(12,2) NOT NULL,
+      estimated_total NUMERIC(12,2) NOT NULL,
+      approved_total NUMERIC(12,2),
+      status TEXT NOT NULL DEFAULT 'pending',
+      approved_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
 
   const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM jd_products`;
   if (Number(count) === 0) {
