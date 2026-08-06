@@ -12,6 +12,7 @@ export default function Home() {
   const [stone, setStone] = useState("Moissanite");
   const [gold, setGold] = useState("14K");
   const [menu, setMenu] = useState(false);
+  const [menuSuppressed, setMenuSuppressed] = useState(false);
   const [siteImages, setSiteImages] = useState({ hero: "/images/hero.jpg", featured: "/images/cuban.jpg" });
   const [checkoutEnabled, setCheckoutEnabled] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
@@ -63,8 +64,8 @@ export default function Home() {
       </div>
 
       <nav className="nav">
-        <div className="menuCluster">
-          <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
+        <div className={`menuCluster ${menuSuppressed ? "menuSuppressed" : ""}`} onMouseLeave={() => { setMenu(false); setMenuSuppressed(false); }}>
+          <button className="menuButton" onClick={() => { if (menu) { setMenu(false); setMenuSuppressed(true); } else { setMenu(true); setMenuSuppressed(false); } }} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
           <div className={`navlinks ${menu ? "open" : ""}`}>
             <a href="#drop" onClick={() => setMenu(false)}>FEATURED</a>
             <a href="#pieces" onClick={() => setMenu(false)}>SHOP ALL</a>
