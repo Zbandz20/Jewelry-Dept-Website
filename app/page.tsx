@@ -122,7 +122,7 @@ export default function Home() {
       </section>
 
       <section className="pieces" id="pieces">
-        <div className="sectionHeading"><p className="eyebrow">THE COLLECTION</p><h2>Pieces <em>worn loud.</em></h2></div>
+        <div className="sectionHeading"><p className="eyebrow">THE COLLECTION</p><h2>Shop <em>Jewelry Dept.</em></h2></div>
         <div className="productGrid">
           {products.map((product, index) => (
             <article className="card" key={product.name}>
