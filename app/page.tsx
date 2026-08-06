@@ -67,7 +67,7 @@ export default function Home() {
           <button className="menuButton" onClick={() => setMenu(!menu)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
           <div className={`navlinks ${menu ? "open" : ""}`}>
             <a href="#drop" onClick={() => setMenu(false)}>FEATURED</a>
-            <a href="#pieces" onClick={() => setMenu(false)}>PIECES</a>
+            <a href="#pieces" onClick={() => setMenu(false)}>SHOP ALL</a>
             <a href="#custom" onClick={() => setMenu(false)}>CUSTOM</a>
             <a href="#proof" onClick={() => setMenu(false)}>THE STONE</a>
           </div>
