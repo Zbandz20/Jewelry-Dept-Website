@@ -233,3 +233,9 @@ footer { order:10; }
 .checkoutBar { order:11; }
 @media(max-width:900px) { .nav { height:210px; } .nav>.wordmark { width:240px; height:125px; } }
 @media(max-width:600px) { .nav { height:175px; top:auto; padding:0 18px; } .nav>.wordmark { width:190px; height:105px; max-width:52vw; } .productGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:40px 12px; } .pieces { padding:20px 14px 80px; } .cardImage { border-radius:12px; } .card h3 { font-size:12px; } .cardTop { display:block; } .cardTop strong { display:block; margin-top:5px; font-size:13px; } .card>p,.card>button { display:none; } .hero { margin:0 14px 70px; min-height:560px; border-radius:14px; } .featured { margin:0 14px 70px; border-radius:14px; } }
+
+
+/* LETTERS-ONLY LOGO SCALE */
+.nav>.wordmark>img { object-fit:cover; object-position:center; transform:scale(1.08); }
+footer>.wordmark>img { object-fit:cover; object-position:center; }
+@media(max-width:600px) { .nav>.wordmark>img { transform:scale(1.16); } }
