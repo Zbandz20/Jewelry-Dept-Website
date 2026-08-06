@@ -21,13 +21,16 @@ export async function POST(request: Request) {
 
   const form = new URLSearchParams();
   const cartMeta: Array<{ id: number; quantity: number }> = [];
+  let merchandiseSubtotalCents = 0;
   products.forEach((product, index) => {
     const quantity = quantities.get(Number(product.id)) || 1;
     if (Number(product.inventory) < quantity) throw new Error(`${product.name} does not have enough inventory.`);
     form.set(`line_items[${index}][price_data][currency]`, "usd");
     form.set(`line_items[${index}][price_data][product_data][name]`, String(product.name));
     if (String(product.image_url || "").startsWith("https://")) form.set(`line_items[${index}][price_data][product_data][images][0]`, String(product.image_url));
-    form.set(`line_items[${index}][price_data][unit_amount]`, String(Math.round(Number(product.price) * 100)));
+    const unitAmount = Math.round(Number(product.price) * 100);
+    merchandiseSubtotalCents += unitAmount * quantity;
+    form.set(`line_items[${index}][price_data][unit_amount]`, String(unitAmount));
     form.set(`line_items[${index}][quantity]`, String(quantity));
     cartMeta.push({ id: Number(product.id), quantity });
   });
@@ -40,6 +43,17 @@ export async function POST(request: Request) {
   form.set("shipping_address_collection[allowed_countries][0]", "US");
   form.set("shipping_address_collection[allowed_countries][1]", "MX");
   form.set("allow_promotion_codes", "true");
+  const freeShipping = merchandiseSubtotalCents > 10_000;
+  const standardShippingCents = Math.max(0, Number(process.env.STANDARD_SHIPPING_CENTS || 995));
+  form.set("shipping_options[0][shipping_rate_data][type]", "fixed_amount");
+  form.set("shipping_options[0][shipping_rate_data][fixed_amount][amount]", String(freeShipping ? 0 : standardShippingCents));
+  form.set("shipping_options[0][shipping_rate_data][fixed_amount][currency]", "usd");
+  form.set("shipping_options[0][shipping_rate_data][display_name]", freeShipping ? "Free standard shipping" : "Standard shipping");
+  form.set("shipping_options[0][shipping_rate_data][delivery_estimate][minimum][unit]", "business_day");
+  form.set("shipping_options[0][shipping_rate_data][delivery_estimate][minimum][value]", "3");
+  form.set("shipping_options[0][shipping_rate_data][delivery_estimate][maximum][unit]", "business_day");
+  form.set("shipping_options[0][shipping_rate_data][delivery_estimate][maximum][value]", "7");
+  form.set("metadata[shipping_policy]", freeShipping ? "free_over_100" : `standard_${standardShippingCents}`);
   form.set("metadata[cart]", JSON.stringify(cartMeta));
 
   const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
