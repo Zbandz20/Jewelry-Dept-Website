@@ -431,3 +431,8 @@ html, body { overflow-x:hidden; }
 .customMessage { margin:0; padding:13px; border-radius:10px; background:#eaf8ef; color:#217248; font-size:11px; line-height:1.5; }
 @media(max-width:900px) { .custom { grid-template-columns:1fr; } }
 @media(max-width:600px) { .customFields { grid-template-columns:1fr; } .customQuoteForm { padding:20px; } }
+
+
+/* CLICK-CONTROLLED MENU */
+.menuCluster:hover .navlinks { display:none; }
+.menuCluster .navlinks.open { display:flex; }
