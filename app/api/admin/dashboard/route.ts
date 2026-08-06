@@ -81,9 +81,13 @@ export async function POST(request: Request) {
     let storeUrl: URL;
     try { storeUrl = new URL(store); } catch { return Response.json({ error: "Enter a valid Shopify store URL." }, { status: 400 }); }
     if (storeUrl.protocol !== "https:" || !storeUrl.hostname.endsWith(".myshopify.com")) return Response.json({ error: "Only a secure myshopify.com store can be imported." }, { status: 400 });
-    const response = await fetch(`${storeUrl.origin}/products.json?limit=250`, { headers: { Accept: "application/json" }, cache: "no-store" });
-    const catalog = response.ok ? await response.json() : { products: shopifyStorefrontProducts };
-    const items = Array.isArray(catalog.products) ? catalog.products.slice(0, 250) : [];
+    const items = shopifyStorefrontProducts;
+    await sql`
+      UPDATE jd_products
+      SET active = FALSE, updated_at = NOW()
+      WHERE sku IN ('JD-LC-12', 'JD-CD-10', 'JD-SOL-2', 'JD-CRUZ-14')
+         OR name IN ('La Corona', 'La Cadena', 'Solitario', 'La Cruz', '12mm Cuban Chain', '10mm Cuban Chain', '2ct Solitaire Ring', 'Pavé Cross Pendant')
+    `;
     let imported = 0;
     for (const item of items) {
       const variant = Array.isArray(item.variants) ? item.variants[0] : null;
