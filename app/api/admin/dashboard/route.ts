@@ -53,6 +53,30 @@ export async function POST(request: Request) {
     return Response.json({ product });
   }
 
+  if (body.type === "shopify-import") {
+    const store = String(body.store || "").trim().replace(/\/$/, "");
+    let storeUrl: URL;
+    try { storeUrl = new URL(store); } catch { return Response.json({ error: "Enter a valid Shopify store URL." }, { status: 400 }); }
+    if (storeUrl.protocol !== "https:" || !storeUrl.hostname.endsWith(".myshopify.com")) return Response.json({ error: "Only a secure myshopify.com store can be imported." }, { status: 400 });
+    const response = await fetch(`${storeUrl.origin}/products.json?limit=250`, { headers: { Accept: "application/json" }, cache: "no-store" });
+    if (!response.ok) return Response.json({ error: "Shopify did not return the product catalog." }, { status: 502 });
+    const catalog = await response.json();
+    const items = Array.isArray(catalog.products) ? catalog.products.slice(0, 250) : [];
+    let imported = 0;
+    for (const item of items) {
+      const variant = Array.isArray(item.variants) ? item.variants[0] : null;
+      const image = Array.isArray(item.images) ? item.images[0]?.src : item.image?.src;
+      const description = String(item.body_html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 1200);
+      await sql`
+        INSERT INTO jd_products (name, sku, price, inventory, active, image_url, description, updated_at)
+        VALUES (${String(item.title || "Shopify product")}, ${String(variant?.sku || "")}, ${Number(variant?.price || 0)}, ${variant?.available === false ? 0 : 1}, TRUE, ${String(image || "")}, ${description}, NOW())
+        ON CONFLICT (name) DO UPDATE SET sku = EXCLUDED.sku, price = EXCLUDED.price, image_url = EXCLUDED.image_url, description = EXCLUDED.description, active = TRUE, updated_at = NOW()
+      `;
+      imported++;
+    }
+    return Response.json({ imported });
+  }
+
   if (body.type === "asset") {
     const value = String(body.dataUrl || "");
     if (value.length > 4_000_000) return Response.json({ error: "Image is too large" }, { status: 413 });
