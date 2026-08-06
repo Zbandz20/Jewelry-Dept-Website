@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     const required = `${decision === "approved" ? "APPROVE" : "DECLINE"} ${id}`;
     if (confirmation !== required) return Response.json({ error: `Type ${required} to complete the second verification.` }, { status: 400 });
     const approvedTotal = decision === "approved" ? Number(body.approvedTotal) : null;
-    if (decision === "approved" && (!Number.isFinite(approvedTotal) || approvedTotal <= 0)) return Response.json({ error: "Enter a valid approved total." }, { status: 400 });
+    if (decision === "approved" && (approvedTotal === null || !Number.isFinite(approvedTotal) || approvedTotal <= 0)) return Response.json({ error: "Enter a valid approved total." }, { status: 400 });
     const [customRequest] = await sql`
       UPDATE jd_custom_requests SET
         status = ${decision},
