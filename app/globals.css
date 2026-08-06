@@ -396,3 +396,10 @@ footer a,footer small { color:var(--shopify-blue); }
   .checkoutBarActions { display:grid; grid-template-columns:1fr 1fr; width:100%; }
   .checkoutBarActions button { width:auto; }
 }
+
+
+/* KEEP MOVING MARQUEES AND CART INSIDE SMALL SCREENS */
+html, body { overflow-x:hidden; }
+.cartOverlay { overflow:hidden; }
+.cartDrawer { max-width:100vw; box-sizing:border-box; }
+.checkoutBar { max-width:100vw; box-sizing:border-box; }
