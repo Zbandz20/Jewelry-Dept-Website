@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Product = { id: number; name: string; description: string; price: number; inventory: number; image_url: string };
 const fallbackProducts: Product[] = [
@@ -11,7 +11,6 @@ export default function Home() {
   const [cartItems, setCartItems] = useState<number[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [menu, setMenu] = useState(false);
-  const [menuSuppressed, setMenuSuppressed] = useState(false);
   const [siteImages, setSiteImages] = useState({ hero: "/images/hero.jpg", featured: "/images/cuban.jpg" });
   const [checkoutEnabled, setCheckoutEnabled] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
@@ -21,6 +20,7 @@ export default function Home() {
   const [customForm, setCustomForm] = useState({ name: "", email: "", phone: "", description: "", karat: "14K", grams: 10, stone: "Moissanite", complexity: "detailed" });
   const [customBusy, setCustomBusy] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
   const cart = cartItems.length;
   const cartLines = products.map(product => ({ ...product, quantity: cartItems.filter(id => id === product.id).length })).filter(product => product.quantity > 0);
   const cartTotal = cartLines.reduce((total, product) => total + product.price * product.quantity, 0);
@@ -38,6 +38,15 @@ export default function Home() {
     fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
     fetch("/api/custom-quote").then(response => response.ok ? response.json() : null).then(setGoldPricing).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!menu) return;
+    function closeOutside(event: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenu(false);
+    }
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [menu]);
 
   async function startCheckout() {
     setCheckoutError("");
@@ -88,8 +97,8 @@ export default function Home() {
       </div>
 
       <nav className="nav">
-        <div className={`menuCluster ${menuSuppressed ? "menuSuppressed" : ""}`} onMouseLeave={() => { setMenu(false); setMenuSuppressed(false); }}>
-          <button className="menuButton" onClick={() => { if (menu) { setMenu(false); setMenuSuppressed(true); } else { setMenu(true); setMenuSuppressed(false); } }} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
+        <div className="menuCluster" ref={menuRef}>
+          <button className="menuButton" onClick={() => setMenu(open => !open)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
           <div className={`navlinks ${menu ? "open" : ""}`}>
             <a href="#drop" onClick={() => setMenu(false)}>FEATURED</a>
             <a href="#pieces" onClick={() => setMenu(false)}>SHOP ALL</a>
