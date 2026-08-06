@@ -61,6 +61,14 @@ export default function AdminPhotos() {
     await load();
   }
 
+  async function importShopify() {
+    setSaving("shopify-import"); setError("");
+    const response = await fetch("/api/admin/dashboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "shopify-import", store: "https://jewelrydeptaz.myshopify.com" }) });
+    const result = await response.json(); setSaving("");
+    if (!response.ok) return setError(result.error || "Shopify products could not be imported.");
+    await load(); setError(`${result.imported} Shopify products imported. Review quantities before activating checkout.`);
+  }
+
   async function upload(id: string, file?: File) {
     if (!file) return;
     if (file.size > 2_800_000) return setError("Please choose an image smaller than 2.8 MB.");
@@ -205,7 +213,8 @@ export default function AdminPhotos() {
         </>}
 
         {tab === "inventory" && <div className="adminPanel">
-          <div className="panelHead"><div><p>PRODUCT CATALOG</p><h2>Products, photos & inventory</h2></div><button className="adminAction" onClick={addProduct}>{saving === "new-product" ? "ADDING…" : "+ ADD PRODUCT"}</button></div>
+          <div className="panelHead"><div><p>PRODUCT CATALOG</p><h2>Products, photos & inventory</h2></div><div className="catalogActions"><button className="adminAction" onClick={importShopify}>{saving === "shopify-import" ? "IMPORTING…" : "IMPORT SHOPIFY"}</button><button className="adminAction" onClick={addProduct}>{saving === "new-product" ? "ADDING…" : "+ ADD PRODUCT"}</button></div></div>
+          {error && <small className="panelError">{error}</small>}
           <div className="productRows">{data.products.map((product, index) => <ProductRow product={product} setData={setData} index={index} save={() => saveProduct(data.products[index])} saving={saving === `product-${product.id}`} key={product.id} />)}</div>
         </div>}
 
