@@ -403,3 +403,31 @@ html, body { overflow-x:hidden; }
 .cartOverlay { overflow:hidden; }
 .cartDrawer { max-width:100vw; box-sizing:border-box; }
 .checkoutBar { max-width:100vw; box-sizing:border-box; }
+
+
+/* FIXED INVENTORY MATERIAL + CUSTOM GOLD QUOTING */
+.inventoryMaterial { display:flex; flex-wrap:wrap; gap:8px; margin:24px 0; }
+.inventoryMaterial b,.inventoryMaterial span { border:1px solid #b7dceb; background:#effaff; color:#236d92; border-radius:999px; padding:10px 13px; font-size:9px; letter-spacing:.1em; }
+.custom { display:grid; grid-template-columns:minmax(0,.9fr) minmax(420px,1.1fr); gap:7vw; align-items:start; background:linear-gradient(135deg,#eef9fd,#fff 55%,#f6fbfd); color:#111; }
+.customIntro>p { max-width:680px; color:#53656f; line-height:1.75; }
+.marketPrice { display:grid; gap:6px; margin:30px 0 10px; padding:22px; border:1px solid #cbe5f1; border-radius:16px; background:#fff; box-shadow:0 12px 34px rgba(36,95,125,.07); }
+.marketPrice span { color:#4fa6d8; font-size:9px; font-weight:700; letter-spacing:.16em; }
+.marketPrice b { font-family:'Libre Caslon Text',serif; font-size:28px; font-weight:400; }
+.marketPrice small { color:#73818a; font-size:9px; }
+.customIntro .steps { grid-template-columns:1fr; margin:32px 0 0; }
+.customIntro .steps div { border-color:#d6e8f0; }
+.customQuoteForm { display:grid; gap:15px; padding:28px; border:1px solid #cde4ef; border-radius:22px; background:#fff; box-shadow:0 24px 70px rgba(36,95,125,.12); }
+.customFields { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+.customQuoteForm label { display:grid; gap:8px; color:#4d6877; font-size:9px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
+.customQuoteForm input,.customQuoteForm select,.customQuoteForm textarea { width:100%; border:1px solid #cddfe8; border-radius:10px; background:#fbfdfe; color:#111; padding:13px; font:inherit; font-size:12px; letter-spacing:0; text-transform:none; outline:none; }
+.customQuoteForm input:focus,.customQuoteForm select:focus,.customQuoteForm textarea:focus { border-color:#4fa6d8; box-shadow:0 0 0 3px rgba(79,166,216,.12); }
+.customQuoteForm textarea { min-height:120px; resize:vertical; }
+.estimateBox { display:grid; gap:7px; margin-top:5px; padding:20px; border-radius:14px; background:#e9f7fd; }
+.estimateBox span { color:#337da3; font-size:9px; font-weight:700; letter-spacing:.14em; }
+.estimateBox strong { color:#1f678c; font-family:'Libre Caslon Text',serif; font-size:34px; font-weight:400; }
+.estimateBox small { color:#647780; font-size:9px; line-height:1.55; }
+.customQuoteForm .primary { width:100%; border:0; border-radius:999px; padding:17px 20px; cursor:pointer; }
+.customQuoteForm .primary:disabled { opacity:.6; cursor:wait; }
+.customMessage { margin:0; padding:13px; border-radius:10px; background:#eaf8ef; color:#217248; font-size:11px; line-height:1.5; }
+@media(max-width:900px) { .custom { grid-template-columns:1fr; } }
+@media(max-width:600px) { .customFields { grid-template-columns:1fr; } .customQuoteForm { padding:20px; } }
