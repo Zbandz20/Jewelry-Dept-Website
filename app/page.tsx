@@ -236,7 +236,7 @@ export default function Home() {
             </article>)}
           </div>
           <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
-          <p className="cartNote">Shipping and taxes are calculated during secure checkout.</p>
+          <p className="cartNote">{cartTotal > 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : `Standard shipping is $9.95 and will be shown at checkout. Add ${(101 - cartTotal).toLocaleString()} more for free shipping.`}</p>
           {checkoutError && <p className="cartError">{checkoutError}</p>}
           <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1}>{checkoutBusy ? "OPENING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
         </aside>
