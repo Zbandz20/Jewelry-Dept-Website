@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     let imported = 0;
     for (const item of items) {
       const variant = Array.isArray(item.variants) ? item.variants[0] : null;
-      const image = Array.isArray(item.images) ? item.images[0]?.src : item.image?.src;
+      const image = Array.isArray(item.images) ? item.images[0]?.src : "";
       const description = String(item.body_html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 1200);
       const imageFile = String(image || "").split("/").pop()?.split("?")[0] || "";
       if (imageFile) await sql`UPDATE jd_products SET name = ${String(item.title)} WHERE image_url LIKE ${`%${imageFile}%`} AND name <> ${String(item.title)}`;
