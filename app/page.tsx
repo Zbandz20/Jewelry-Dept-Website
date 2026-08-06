@@ -190,7 +190,7 @@ export default function Home() {
           <p className="eyebrow">05 / CUSTOM GOLD DEPT.</p>
           <h2>Your idea.<br /><em>Priced responsibly.</em></h2>
           <p>Custom gold requests use the current gold market, karat purity, estimated finished weight, a 15% sourcing and casting allowance, and craftsmanship. This is an estimate only—no payment can be made until Jewelry Dept. reviews and approves the final quote.</p>
-          <div className="marketPrice"><span>GOLD MARKET</span><b>{spot ? `${spot.toLocaleString(undefined, { maximumFractionDigits: 2 })} / TROY OZ` : "LOADING…"}</b><small>{goldPricing?.market?.live ? "Live market · refreshed every 5 minutes" : "Protected fallback price"}</small></div>
+          <div className="marketPrice"><span>GOLD MARKET</span><b>{spot ? "$" + spot.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " / TROY OZ" : "LOADING…"}</b><small>{goldPricing?.market?.live ? "Live market · refreshed every 5 minutes" : "Protected fallback price"}</small></div>
           <div className="steps"><div><b>01</b><span>Submit design and estimated weight</span></div><div><b>02</b><span>Management verifies and approves</span></div><div><b>03</b><span>Final quote and payment link</span></div></div>
         </div>
         <form className="customQuoteForm" onSubmit={submitCustomRequest}>
@@ -199,7 +199,7 @@ export default function Home() {
           <label>Craftsmanship<select value={customForm.complexity} onChange={event => setCustomForm({...customForm, complexity:event.target.value})}><option value="classic">Classic / simple — $35 per gram, $150 minimum</option><option value="detailed">Detailed custom — $55 per gram, $250 minimum</option><option value="pave">Pavé / stone intensive — $85 per gram, $400 minimum</option></select></label>
           <label>Stone choice<select value={customForm.stone} onChange={event => setCustomForm({...customForm, stone:event.target.value})}><option>No stones</option><option>Moissanite</option><option>Lab diamond</option><option>Natural diamond</option></select></label>
           <label>Describe the piece<textarea required value={customForm.description} onChange={event => setCustomForm({...customForm, description:event.target.value})} placeholder="Piece type, dimensions, inspiration, stone sizes, engraving, and anything else we should know." /></label>
-          <div className="estimateBox"><span>ESTIMATED CUSTOM GOLD TOTAL</span><strong>{customEstimate ? `${customEstimate.toLocaleString()}` : "—"}</strong><small>Includes estimated gold value, 15% sourcing/casting allowance, and craftsmanship. Stones, CAD, taxes, and shipping may change the final approved quote.</small></div>
+          <div className="estimateBox"><span>ESTIMATED CUSTOM GOLD TOTAL</span><strong>{customEstimate ? "$" + customEstimate.toLocaleString() : "—"}</strong><small>Includes estimated gold value, 15% sourcing/casting allowance, and craftsmanship. Stones, CAD, taxes, and shipping may change the final approved quote.</small></div>
           <button className="primary" disabled={customBusy}>{customBusy ? "SENDING REQUEST…" : "REQUEST MANAGEMENT APPROVAL →"}</button>
           {customMessage && <p className="customMessage">{customMessage}</p>}
         </form>
