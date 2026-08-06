@@ -252,3 +252,45 @@ footer>.wordmark>img { object-fit:cover; object-position:center; }
 .featuredInfo h2 em,.buyRow strong { color:var(--shopify-blue); }
 footer a,footer small { color:var(--shopify-blue); }
 .signup button { color:var(--shopify-blue); }
+
+
+/* POLISHED RESPONSIVE NAVIGATION */
+@media(max-width:900px) {
+  .menuButton {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    justify-self:start;
+    padding:10px 14px;
+    border:1px solid rgba(79,166,216,.38);
+    border-radius:999px;
+    background:#f4fbff;
+    color:#287fad;
+    font-weight:600;
+    letter-spacing:.12em;
+    box-shadow:0 5px 16px rgba(37,112,153,.08);
+  }
+  .menuButton::before { content:""; width:14px; height:10px; border-top:1.5px solid currentColor; border-bottom:1.5px solid currentColor; }
+  .navlinks {
+    top:calc(100% - 22px);
+    left:18px;
+    right:18px;
+    padding:10px;
+    gap:0;
+    border:1px solid rgba(79,166,216,.24);
+    border-radius:18px;
+    background:rgba(255,255,255,.98);
+    box-shadow:0 22px 55px rgba(25,64,84,.16);
+    backdrop-filter:blur(18px);
+    z-index:30;
+  }
+  .navlinks.open { display:flex; }
+  .navlinks a {
+    padding:16px 15px;
+    color:#1b648c;
+    font-weight:600;
+    border-bottom:1px solid #e6f2f8;
+  }
+  .navlinks a:last-child { border-bottom:0; }
+  .navlinks a:hover { background:#f0f9fd; border-radius:10px; }
+}
