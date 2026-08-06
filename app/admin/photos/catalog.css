@@ -13,3 +13,30 @@
 .labelActions small { word-break:break-all; }
 @media(max-width:1100px) { .productRow { grid-template-columns:80px 1fr 1fr; } .productFields { grid-column:span 2; } }
 @media(max-width:560px) { .productRow { grid-template-columns:1fr; } .productFields { grid-column:auto; } }
+
+.approvalNotice { border:1px solid #5c482d; background:#1b1711; padding:18px; margin-bottom:22px; }
+.approvalNotice b { color:#e7c88d; font-size:12px; }
+.approvalNotice p { color:#9b917f; font-size:10px; line-height:1.6; margin:7px 0 0; }
+.customRequestList { display:grid; gap:16px; }
+.customRequestList>article { background:#0c0c0c; border:1px solid #303030; padding:22px; }
+.requestHead { display:flex; justify-content:space-between; gap:20px; }
+.requestHead span { color:#c6a269; font-size:9px; letter-spacing:.14em; }
+.requestHead h3 { font-family:Georgia,serif; font-size:25px; font-weight:400; margin:8px 0 4px; }
+.requestHead p,.requestDescription { color:#888; font-size:11px; line-height:1.6; }
+.requestStatus { align-self:start; border:1px solid #555; border-radius:99px; padding:8px 11px; font-size:8px; letter-spacing:.12em; text-transform:uppercase; }
+.requestStatus.approved { color:#65d29a; border-color:#255e43; }
+.requestStatus.declined { color:#e77984; border-color:#6c2b34; }
+.quoteBreakdown { display:flex; flex-wrap:wrap; gap:7px; margin:18px 0; }
+.quoteBreakdown span { background:#181818; border:1px solid #303030; color:#bbb; padding:8px 10px; font-size:9px; text-transform:uppercase; }
+.customRequestList dl { margin:0; border-top:1px solid #282828; }
+.customRequestList dl div { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222; }
+.customRequestList dt { color:#777; font-size:10px; }
+.customRequestList dd { margin:0; color:#ddd; font-size:11px; }
+.approvalControls { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:20px; padding-top:20px; border-top:1px solid #333; }
+.approvalControls label { color:#888; font-size:9px; letter-spacing:.08em; }
+.approvalControls input { display:block; width:100%; margin-top:8px; padding:12px; background:#151515; color:#fff; border:1px solid #383838; }
+.approvalControls>div { grid-column:1/-1; display:flex; gap:8px; }
+.approvalControls button { border:0; padding:13px 18px; background:#e9e2d5; color:#111; font-size:9px; font-weight:bold; letter-spacing:.1em; }
+.approvalControls button.decline { background:#32151a; color:#ef9ca5; }
+.decisionRecord { color:#777; font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
+@media(max-width:700px) { .approvalControls { grid-template-columns:1fr; } .approvalControls>div { grid-column:auto; } }
