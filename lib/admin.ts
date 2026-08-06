@@ -197,6 +197,19 @@ export async function ensureAdminTables() {
     WHERE name IN ('La Corona', 'La Cadena', 'Solitario', 'La Cruz')
   `;
   await sql`
+    UPDATE jd_products SET description = CASE name
+      WHEN '8mm 22-inch Cuban Chain & Bracelet Set' THEN 'Solid 925 sterling silver and moissanite 8mm Cuban chain with matching bracelet. Chain length: 22 inches.'
+      WHEN '13mm Two-Tone Cuban Chain' THEN 'Solid 925 sterling silver and moissanite 13mm two-tone Cuban chain.'
+      WHEN '13mm 22-inch Cuban Chain with KC Royals Pendant' THEN 'Solid 925 sterling silver and moissanite 13mm Cuban chain with custom KC Royals pendant. Chain length: 22 inches.'
+      WHEN '10mm 22-inch Cuban Chain & Bracelet Set' THEN 'Solid 925 sterling silver and moissanite 10mm Cuban chain with matching bracelet. Chain length: 22 inches.'
+      WHEN '3mm 22-inch Tennis Chain, Pendant & Bracelet Set' THEN 'Solid 925 sterling silver and moissanite 3mm tennis chain with pendant and matching bracelet. Chain length: 22 inches.'
+      WHEN '3mm 22-inch Tennis Chain with Pendant' THEN 'Solid 925 sterling silver and moissanite 3mm tennis chain with pendant. Chain length: 22 inches.'
+      WHEN '10mm Halo Earrings with 3ct Center Stone' THEN 'Solid 925 sterling silver and moissanite 10mm halo earrings with a 3-carat center stone.'
+      ELSE description
+    END, updated_at = NOW()
+    WHERE name IN ('8mm 22-inch Cuban Chain & Bracelet Set', '13mm Two-Tone Cuban Chain', '13mm 22-inch Cuban Chain with KC Royals Pendant', '10mm 22-inch Cuban Chain & Bracelet Set', '3mm 22-inch Tennis Chain, Pendant & Bracelet Set', '3mm 22-inch Tennis Chain with Pendant', '10mm Halo Earrings with 3ct Center Stone')
+  `;
+  await sql`
     INSERT INTO jd_assets (id, label, data_url) VALUES
     ('hero', 'Homepage hero', ''),
     ('featured', 'Featured Cuban chain', '')
