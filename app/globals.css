@@ -436,3 +436,8 @@ html, body { overflow-x:hidden; }
 /* CLICK-CONTROLLED MENU */
 .menuCluster:hover .navlinks { display:none; }
 .menuCluster .navlinks.open { display:flex; }
+
+
+/* RELIABLE OUTSIDE-CLICK MENU CLOSE */
+.menuDismiss { position:fixed; inset:0; z-index:31; border:0; background:transparent; cursor:default; }
+.menuCluster { z-index:32; }
