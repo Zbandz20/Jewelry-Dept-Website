@@ -76,20 +76,6 @@ export default function Home() {
         <a className="cart" href="#pieces">BAG <span>{cart}</span></a>
       </nav>
 
-      <header className="hero">
-        <div className="heroImage" style={{ backgroundImage: `url(${siteImages.hero})` }} />
-        <div className="heroShade" />
-        <div className="heroCopy">
-          <p className="eyebrow">FIRE WITHOUT COMPROMISE — EST. MMXXVI</p>
-          <h1>More fire<br /><em>than a diamond.</em></h1>
-          <p className="intro">Moissanite, lab-grown and natural diamonds. Solid gold, 10k–24k. Cut to order and set by hand.</p>
-          <div className="actions">
-            <a className="primary" href="#drop">ENTER THE DROP</a>
-            <a className="secondary" href="#custom">BUILD CUSTOM</a>
-          </div>
-        </div>
-        <div className="heroStat"><strong>2.5×</strong><span>THE FIRE<br />OF A DIAMOND</span></div>
-      </header>
 
       <section className="manifesto">
         <span>01 / FEEL</span>
