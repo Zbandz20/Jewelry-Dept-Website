@@ -9,6 +9,7 @@ const fallbackProducts: Product[] = [
 
 export default function Home() {
   const [cartItems, setCartItems] = useState<number[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
   const [stone, setStone] = useState("Moissanite");
   const [gold, setGold] = useState("14K");
   const [menu, setMenu] = useState(false);
@@ -19,6 +20,8 @@ export default function Home() {
   const [checkoutError, setCheckoutError] = useState("");
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
   const cart = cartItems.length;
+  const cartLines = products.map(product => ({ ...product, quantity: cartItems.filter(id => id === product.id).length })).filter(product => product.quantity > 0);
+  const cartTotal = cartLines.reduce((total, product) => total + product.price * product.quantity, 0);
   const featuredProduct = products[0] || fallbackProducts[0];
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export default function Home() {
           </div>
         </div>
         <Logo clipId="navJewelryLogo" />
-        <a className="cart" href="#pieces">BAG <span>{cart}</span></a>
+        <button className="cart" onClick={() => setCartOpen(true)} aria-label={`Open bag with ${cart} items`}>BAG <span>{cart}</span></button>
       </nav>
 
 
@@ -184,9 +187,26 @@ export default function Home() {
         </form>
       </section>
 
+      {cartOpen && <div className="cartOverlay" onClick={() => setCartOpen(false)}>
+        <aside className="cartDrawer" role="dialog" aria-modal="true" aria-label="Shopping bag" onClick={event => event.stopPropagation()}>
+          <div className="cartDrawerHead"><div><p>YOUR BAG</p><h2>{cart} {cart === 1 ? "piece" : "pieces"}</h2></div><button onClick={() => setCartOpen(false)} aria-label="Close shopping bag">CLOSE ×</button></div>
+          <div className="cartLines">
+            {cartLines.map(product => <article key={product.id}>
+              <img src={product.image_url || siteImages.featured} alt="" />
+              <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button onClick={() => setCartItems(items => { const index = items.indexOf(product.id); return index < 0 ? items : items.filter((_, itemIndex) => itemIndex !== index); })}>REMOVE ONE</button></div>
+              <strong>${(product.price * product.quantity).toLocaleString()}</strong>
+            </article>)}
+          </div>
+          <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
+          <p className="cartNote">Shipping and taxes are calculated during secure checkout.</p>
+          {checkoutError && <p className="cartError">{checkoutError}</p>}
+          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1}>{checkoutBusy ? "OPENING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
+        </aside>
+      </div>}
+
       {cart > 0 && <div className="checkoutBar">
-        <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} IN YOUR BAG</b>{checkoutError && <span>{checkoutError}</span>}</div>
-        <button onClick={startCheckout} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button>
+        <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} · ${cartTotal.toLocaleString()}</b>{checkoutError && <span>{checkoutError}</span>}</div>
+        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
       </div>}
 
       <footer>
