@@ -242,7 +242,7 @@ footer>.wordmark>img { object-fit:cover; object-position:center; }
 
 
 /* SHOPIFY BLUE ACCENTS */
-:root { --shopify-blue:#8acbea; }
+:root { --shopify-blue:#4fa6d8; }
 .navlinks,.menuButton,.cart { color:var(--shopify-blue); }
 .cart span { background:var(--shopify-blue); color:#fff; }
 .card h3,.cardTop strong { color:var(--shopify-blue); }
