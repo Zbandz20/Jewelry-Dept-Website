@@ -10,8 +10,6 @@ const fallbackProducts: Product[] = [
 export default function Home() {
   const [cartItems, setCartItems] = useState<number[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [stone, setStone] = useState("Moissanite");
-  const [gold, setGold] = useState("14K");
   const [menu, setMenu] = useState(false);
   const [menuSuppressed, setMenuSuppressed] = useState(false);
   const [siteImages, setSiteImages] = useState({ hero: "/images/hero.jpg", featured: "/images/cuban.jpg" });
@@ -19,6 +17,10 @@ export default function Home() {
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const [goldPricing, setGoldPricing] = useState<any>(null);
+  const [customForm, setCustomForm] = useState({ name: "", email: "", phone: "", description: "", karat: "14K", grams: 10, stone: "Moissanite", complexity: "detailed" });
+  const [customBusy, setCustomBusy] = useState(false);
+  const [customMessage, setCustomMessage] = useState("");
   const cart = cartItems.length;
   const cartLines = products.map(product => ({ ...product, quantity: cartItems.filter(id => id === product.id).length })).filter(product => product.quantity > 0);
   const cartTotal = cartLines.reduce((total, product) => total + product.price * product.quantity, 0);
@@ -34,6 +36,7 @@ export default function Home() {
     let sessionId = sessionStorage.getItem(storageKey);
     if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem(storageKey, sessionId); }
     fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
+    fetch("/api/custom-quote").then(response => response.ok ? response.json() : null).then(setGoldPricing).catch(() => {});
   }, []);
 
   async function startCheckout() {
@@ -50,6 +53,24 @@ export default function Home() {
     if (!response.ok) return setCheckoutError(result.error || "Checkout could not start.");
     window.location.href = result.url;
   }
+
+  async function submitCustomRequest(event: React.FormEvent) {
+    event.preventDefault();
+    setCustomBusy(true); setCustomMessage("");
+    const response = await fetch("/api/custom-quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(customForm) });
+    const result = await response.json(); setCustomBusy(false);
+    if (!response.ok) return setCustomMessage(result.error || "Your request could not be sent.");
+    setCustomMessage(`Request #${result.request.id} received. No payment was taken. We will review and approve your final quote.`);
+    setCustomForm(current => ({ ...current, description: "" }));
+  }
+
+  const spot = Number(goldPricing?.market?.price || 0);
+  const purity = Number(goldPricing?.purity?.[customForm.karat] || 0);
+  const craft = goldPricing?.craftsmanship?.[customForm.complexity];
+  const metalCost = spot ? (spot / 31.1034768) * Number(customForm.grams) * purity : 0;
+  const metalAllowance = metalCost * 0.15;
+  const craftCost = craft ? Math.max(Number(craft.minimum), Number(customForm.grams) * Number(craft.perGram)) : 0;
+  const customEstimate = Math.ceil((metalCost + metalAllowance + craftCost) / 5) * 5;
 
   return (
     <main>
@@ -103,8 +124,7 @@ export default function Home() {
           <p className="eyebrow">FEATURED — THE DROP</p>
           <h2>{featuredProduct.name}</h2>
           <p>{featuredProduct.description || "Hand-finished jewelry, made to stand out."}</p>
-          <Option label="Stone" items={["Moissanite", "Lab Diamond", "Natural"]} value={stone} setValue={setStone} />
-          <Option label="Gold" items={["10K", "14K", "18K", "24K"]} value={gold} setValue={setGold} />
+          <div className="inventoryMaterial"><b>SOLID 925 STERLING SILVER</b><span>MOISSANITE STONES</span></div>
           <div className="buyRow">
             <div><small>FROM</small><strong>${featuredProduct.price.toLocaleString()}</strong></div>
             <button disabled={featuredProduct.inventory < 1} onClick={() => setCartItems(items => [...items, featuredProduct.id])}>{featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG — SHIPS FREE"}</button>
@@ -166,15 +186,23 @@ export default function Home() {
       </section>
 
       <section className="custom" id="custom">
-        <p className="eyebrow">05 / CUSTOM DEPT.</p>
-        <h2>Your idea.<br /><em>Our bench.</em></h2>
-        <p>Send a sketch, a photo, or a voice note. We CAD it, you approve the render, and our bench casts and sets it by hand.</p>
-        <div className="steps">
-          <div><b>01</b><span>Share your reference</span></div>
-          <div><b>02</b><span>Approve the render + quote</span></div>
-          <div><b>03</b><span>Cast, set, and ship</span></div>
+        <div className="customIntro">
+          <p className="eyebrow">05 / CUSTOM GOLD DEPT.</p>
+          <h2>Your idea.<br /><em>Priced responsibly.</em></h2>
+          <p>Custom gold requests use the current gold market, karat purity, estimated finished weight, a 15% sourcing and casting allowance, and craftsmanship. This is an estimate only—no payment can be made until Jewelry Dept. reviews and approves the final quote.</p>
+          <div className="marketPrice"><span>GOLD MARKET</span><b>{spot ? `${spot.toLocaleString(undefined, { maximumFractionDigits: 2 })} / TROY OZ` : "LOADING…"}</b><small>{goldPricing?.market?.live ? "Live market · refreshed every 5 minutes" : "Protected fallback price"}</small></div>
+          <div className="steps"><div><b>01</b><span>Submit design and estimated weight</span></div><div><b>02</b><span>Management verifies and approves</span></div><div><b>03</b><span>Final quote and payment link</span></div></div>
         </div>
-        <a className="primary" href="mailto:custom@jewelrydept.co?subject=Custom%20piece%20inquiry">START A CUSTOM PIECE</a>
+        <form className="customQuoteForm" onSubmit={submitCustomRequest}>
+          <div className="customFields"><label>Name<input required value={customForm.name} onChange={event => setCustomForm({...customForm, name:event.target.value})} /></label><label>Email<input required type="email" value={customForm.email} onChange={event => setCustomForm({...customForm, email:event.target.value})} /></label><label>Phone<input value={customForm.phone} onChange={event => setCustomForm({...customForm, phone:event.target.value})} /></label><label>Estimated finished weight (grams)<input required type="number" min="1" max="1000" step=".1" value={customForm.grams} onChange={event => setCustomForm({...customForm, grams:Number(event.target.value)})} /></label></div>
+          <label>Gold purity<select value={customForm.karat} onChange={event => setCustomForm({...customForm, karat:event.target.value})}><option>10K</option><option>14K</option><option>18K</option><option>24K</option></select></label>
+          <label>Craftsmanship<select value={customForm.complexity} onChange={event => setCustomForm({...customForm, complexity:event.target.value})}><option value="classic">Classic / simple — $35 per gram, $150 minimum</option><option value="detailed">Detailed custom — $55 per gram, $250 minimum</option><option value="pave">Pavé / stone intensive — $85 per gram, $400 minimum</option></select></label>
+          <label>Stone choice<select value={customForm.stone} onChange={event => setCustomForm({...customForm, stone:event.target.value})}><option>No stones</option><option>Moissanite</option><option>Lab diamond</option><option>Natural diamond</option></select></label>
+          <label>Describe the piece<textarea required value={customForm.description} onChange={event => setCustomForm({...customForm, description:event.target.value})} placeholder="Piece type, dimensions, inspiration, stone sizes, engraving, and anything else we should know." /></label>
+          <div className="estimateBox"><span>ESTIMATED CUSTOM GOLD TOTAL</span><strong>{customEstimate ? `${customEstimate.toLocaleString()}` : "—"}</strong><small>Includes estimated gold value, 15% sourcing/casting allowance, and craftsmanship. Stones, CAD, taxes, and shipping may change the final approved quote.</small></div>
+          <button className="primary" disabled={customBusy}>{customBusy ? "SENDING REQUEST…" : "REQUEST MANAGEMENT APPROVAL →"}</button>
+          {customMessage && <p className="customMessage">{customMessage}</p>}
+        </form>
       </section>
 
       <section className="signup">
