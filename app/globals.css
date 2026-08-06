@@ -152,3 +152,47 @@ footer small { grid-column:1/-1; color:#4f4c47; font-size:8px; letter-spacing:.1
   .checkoutBar button { width:100%; }
 }
 @media (prefers-reduced-motion:reduce) { * { scroll-behavior:auto!important; animation:none!important; transition:none!important; } }
+
+
+/* LIGHT LUXURY THEME */
+:root { --ink:#111; --paper:#fffdf8; --gold:#9a6d2f; --wine:#9c1b2c; --line:rgba(17,17,17,.14); }
+html,body { background:#fffdf8; color:#111; }
+.ticker { background:#fff; color:#2d2d2d; border-color:#d8d2c7; }
+.nav { background:rgba(255,253,248,.94); color:#111; border-color:rgba(17,17,17,.16); backdrop-filter:blur(14px); box-shadow:0 8px 28px rgba(0,0,0,.08); }
+.wordmark { filter:contrast(1.2) brightness(.92) drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
+.cart span { color:#fff; }
+.hero { color:#fff; }
+.heroShade { background:linear-gradient(90deg,rgba(0,0,0,.78) 0%,rgba(0,0,0,.28) 62%,rgba(0,0,0,.08)),linear-gradient(0deg,rgba(0,0,0,.38),transparent 48%); }
+.hero .eyebrow { color:#f0cc8b!important; }
+.hero .intro { color:#f3f0e9; }
+.hero .primary { background:#fff; color:#111; }
+.hero .secondary { color:#fff; border-color:rgba(255,255,255,.7); }
+.manifesto,.pieces,.signup,footer { background:#fffdf8; color:#111; }
+.manifesto { border-color:#d9d3c9; }
+.manifesto p,.featuredInfo>p,.custom>p { color:#5e5a54; }
+.mexicoMarquee { background:#f3efe7; border-color:#d9d3c9; }
+.featured { background:#fff; color:#111; border-color:#d9d3c9; }
+.featuredInfo { background:linear-gradient(135deg,#fff 0%,#f6f1e8 100%); }
+.option>span { color:#666; }
+.option button { color:#333; border-color:#bbb5aa; background:#fff; }
+.option button.active { color:#111; border-color:#9a6d2f; background:#f2e4cc; }
+.buyRow button,.card button { background:#111; color:#fff; border-color:#111; }
+.assurances { color:#5c5851; }
+.pieces { background:#f7f3eb; }
+.card { background:#fff; padding:12px 12px 16px; border:1px solid #dfd8cc; box-shadow:0 12px 34px rgba(41,32,21,.07); transition:transform .3s ease,box-shadow .3s ease; }
+.card:hover { transform:translateY(-5px); box-shadow:0 20px 46px rgba(41,32,21,.13); }
+.card>p { color:#65605a; }
+.proof { background:#fff; }
+.custom { background:linear-gradient(125deg,#e7f2ec,#fff 48%,#f8e5e7); color:#111; }
+.custom .steps { border-color:rgba(17,17,17,.16); }
+.custom .steps div { border-color:rgba(17,17,17,.16); }
+.custom .primary { background:#111; color:#fff; }
+.signup { border-color:#d9d3c9; }
+.signup form { border-color:#777; }
+.signup input { color:#111; }
+footer { border-color:#d9d3c9; }
+footer p { color:#5f5b54; }
+footer small { color:#77716a; }
+.checkoutBar { background:#fff; color:#111; border-color:#cfc8bd; box-shadow:0 18px 60px rgba(0,0,0,.18); }
+.checkoutBar button { background:#111; color:#fff; }
+@media (max-width:900px) { .navlinks { background:#fffdf8; color:#111; box-shadow:0 16px 28px rgba(0,0,0,.12); } }
