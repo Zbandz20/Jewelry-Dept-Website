@@ -307,3 +307,28 @@ footer a,footer small { color:var(--shopify-blue); }
 .menuCluster .navlinks a:hover { background:#f0f9fd; border-radius:10px; }
 @media(max-width:900px) { .menuCluster .navlinks { position:fixed; top:170px; left:18px; right:18px; width:auto; } }
 @media(max-width:600px) { .menuCluster .navlinks { top:140px; } }
+
+
+/* ENDLESS TOP ANNOUNCEMENT TICKER */
+.ticker {
+  display:block;
+  order:0;
+  width:100%;
+  min-height:38px;
+  background:#eaf7fd;
+  color:#245f7d;
+  border-bottom:1px solid rgba(79,166,216,.28);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.16em;
+}
+.ticker::after { background:var(--shopify-blue); height:1px; opacity:.65; }
+.tickerTrack { animation:ticker 34s linear infinite; }
+.tickerGroup { padding:12px 0; }
+.tickerGroup span { padding-left:52px; }
+.tickerGroup b { color:var(--shopify-blue); padding-left:52px; }
+@media(max-width:600px) {
+  .ticker { font-size:9px; letter-spacing:.12em; }
+  .tickerTrack { animation-duration:28s; }
+  .tickerGroup span,.tickerGroup b { padding-left:34px; }
+}
