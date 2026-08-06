@@ -97,6 +97,7 @@ export default function Home() {
       </div>
 
       <nav className="nav">
+        {menu && <button className="menuDismiss" onClick={() => setMenu(false)} aria-label="Close navigation menu" />}
         <div className="menuCluster" ref={menuRef}>
           <button className="menuButton" onClick={() => setMenu(open => !open)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
           <div className={`navlinks ${menu ? "open" : ""}`}>
