@@ -494,34 +494,16 @@ footer p { color:#b9b9b9; }
   .navlinks { background:#090909; color:#fff; box-shadow:0 16px 28px rgba(0,0,0,.38); }
 }
 
-/* WHITE LETTERS-ONLY LOGO — NO EMBLEM */
+/* ORIGINAL LETTERING FONT — WHITE, NO EMBLEM */
+.wordmark { position:relative; isolation:isolate; }
 .wordmark::before,.wordmark::after { display:none!important; content:none!important; background:none!important; }
-.wordmark>img { display:none!important; visibility:hidden!important; }
-.wordmarkText {
+.wordmark>img {
+  display:block!important;
+  visibility:visible!important;
   width:100%;
+  max-width:100%;
   height:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  font-family:'Knewave','Arial Black',sans-serif;
-  font-weight:400;
-  line-height:.76;
-  letter-spacing:-.045em;
-  text-align:center;
-  text-transform:uppercase;
-  filter:drop-shadow(0 2px 2px rgba(0,0,0,.82));
-}
-.wordmarkText>span:first-child { font-size:54px; }
-.wordmarkText>span:last-child { font-size:43px; }
-footer .wordmarkText>span:first-child { font-size:47px; }
-footer .wordmarkText>span:last-child { font-size:38px; }
-@media(max-width:900px) {
-  .nav .wordmarkText>span:first-child { font-size:43px; }
-  .nav .wordmarkText>span:last-child { font-size:34px; }
-}
-@media(max-width:600px) {
-  .nav .wordmarkText>span:first-child { font-size:34px; }
-  .nav .wordmarkText>span:last-child { font-size:27px; }
+  object-fit:contain;
+  transform:none;
+  filter:brightness(0) invert(1) drop-shadow(0 2px 2px rgba(0,0,0,.82));
 }
