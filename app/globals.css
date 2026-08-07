@@ -441,3 +441,55 @@ html, body { overflow-x:hidden; }
 /* RELIABLE OUTSIDE-CLICK MENU CLOSE */
 .menuDismiss { position:fixed; inset:0; z-index:31; border:0; background:transparent; cursor:default; }
 .menuCluster { z-index:32; }
+
+/* BLACK LUXURY THEME — WHITE TYPE, BLUE ACCENTS PRESERVED */
+:root {
+  --ink:#050505;
+  --paper:#ffffff;
+  --line:rgba(255,255,255,.16);
+}
+html,body,main { background:#050505; color:#fff; }
+.ticker { background:#07131a; color:#fff; border-color:rgba(79,166,216,.35); }
+.nav { background:rgba(5,5,5,.94); color:#fff; border-color:rgba(255,255,255,.12); box-shadow:0 8px 28px rgba(0,0,0,.32); }
+.cart { color:var(--shopify-blue); }
+.manifesto,.pieces,.signup,footer { background:#050505; color:#fff; }
+.manifesto { border-color:rgba(255,255,255,.14); }
+.manifesto p,.featuredInfo>p,.customIntro>p { color:#b9b9b9; }
+.mexicoMarquee { background:#0a0a0a; border-color:rgba(255,255,255,.14); }
+.featured { background:#090909; color:#fff; border-color:rgba(255,255,255,.15); }
+.featuredInfo { background:linear-gradient(135deg,#101010 0%,#050505 100%); }
+.option>span { color:#aaa; }
+.option button { color:#fff; border-color:#555; background:#111; }
+.option button.active { color:#fff; border-color:var(--shopify-blue); background:rgba(79,166,216,.17); }
+.buyRow button { background:var(--shopify-blue); color:#fff; }
+.assurances { color:#aaa; }
+.card { background:#050505; color:#fff; }
+.cardImage { background:#151515; }
+.cardImage span { background:#0b0b0b; color:#fff; border:1px solid rgba(255,255,255,.16); }
+.card>p { color:var(--shopify-blue); }
+.sectionHeading h2 em { color:#fff; }
+.proof { background:#0a0f12; color:#fff; }
+.stoneIntro>p:last-child { color:#b6c1c7; }
+.stoneCards article,.stoneTable { background:#111; color:#fff; border-color:#284655; }
+.stoneCards p,.stoneNote { color:#b7c0c5; }
+.stoneCards dl div,.stoneTable>div { border-color:#243b47; }
+.stoneCards dt { color:#a8b5bc; }
+.stoneTable>.stoneTableHead { background:#102733; }
+.stoneTable span { color:#c6d0d5; }
+.custom { background:linear-gradient(135deg,#07131a,#050505 55%,#0b1115); color:#fff; }
+.customQuoteForm,.marketPrice { background:#111; color:#fff; border-color:#284655; }
+.customQuoteForm input,.customQuoteForm select,.customQuoteForm textarea { background:#080808; color:#fff; border-color:#38515d; }
+.customQuoteForm input::placeholder,.customQuoteForm textarea::placeholder,.signup input::placeholder { color:#aaa; }
+.estimateBox { background:#102733; }
+.signup { border-color:rgba(255,255,255,.14); }
+.signup input { color:#fff; }
+footer { border-color:rgba(255,255,255,.14); }
+footer p { color:#b9b9b9; }
+.checkoutBar { background:#111; color:#fff; border-color:#3b3b3b; box-shadow:0 18px 60px rgba(0,0,0,.55); }
+.menuCluster .navlinks { background:rgba(9,9,9,.98); border-color:rgba(79,166,216,.35); box-shadow:0 22px 55px rgba(0,0,0,.45); }
+.menuCluster .navlinks a { border-color:#173847; }
+.menuCluster .navlinks a:hover { background:#102733; }
+.menuButton { background:#0b1820; }
+@media(max-width:900px) {
+  .navlinks { background:#090909; color:#fff; box-shadow:0 16px 28px rgba(0,0,0,.38); }
+}
