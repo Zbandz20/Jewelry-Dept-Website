@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { ensureAdminTables, getSql } from "@/lib/admin";
+import { escapeHtml, ownerEmail, sendTransactionalEmail } from "@/lib/email";
 
 function validSignature(payload: string, header: string, secret: string) {
   const parts = Object.fromEntries(header.split(",").map(part => part.split("=")));
@@ -38,6 +39,38 @@ export async function POST(request: Request) {
     for (const item of cart) {
       await sql`UPDATE jd_products SET inventory = GREATEST(0, inventory - ${Number(item.quantity)}), updated_at = NOW() WHERE id = ${Number(item.id)}`;
     }
+
+    const orderId = Number(inserted[0].id);
+    const total = (Number(session.amount_total || 0) / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+    const customerEmail = String(customer.email || "");
+    const lowStock = await sql`SELECT name, sku, inventory FROM jd_products WHERE active = TRUE AND inventory <= 5 ORDER BY inventory, name`;
+    const notifications: Array<Promise<unknown>> = [];
+
+    if (customerEmail) {
+      notifications.push(sendTransactionalEmail({
+        to: customerEmail,
+        subject: `Jewelry Dept. order #${orderId} confirmed`,
+        html: `<div style="font-family:Arial,sans-serif;color:#111"><p style="letter-spacing:.12em">JEWELRY DEPT.</p><h1>Order confirmed.</h1><p>Thank you, ${escapeHtml(shipping.name || customer.name || "customer")}. We received your payment of <strong>${escapeHtml(total)}</strong>.</p><p>Your order number is <strong>#${orderId}</strong>. We will email tracking after your shipping label is created.</p><p>Questions? Reply to this email or contact hello@jewelrydept.co.</p></div>`,
+      }));
+    }
+
+    const admin = ownerEmail();
+    if (admin) {
+      notifications.push(sendTransactionalEmail({
+        to: admin,
+        subject: `New Jewelry Dept. order #${orderId}`,
+        html: `<div style="font-family:Arial,sans-serif;color:#111"><h1>New paid order #${orderId}</h1><p>Total: <strong>${escapeHtml(total)}</strong></p><p>Customer: ${escapeHtml(shipping.name || customer.name || "Online customer")}</p><p>Open the management dashboard to review and create the shipping label.</p></div>`,
+      }));
+      if (lowStock.length) {
+        const rows = lowStock.map(item => `<li>${escapeHtml(item.name)} — ${Number(item.inventory)} left${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</li>`).join("");
+        notifications.push(sendTransactionalEmail({
+          to: admin,
+          subject: "Jewelry Dept. low-stock alert",
+          html: `<div style="font-family:Arial,sans-serif;color:#111"><h1>Inventory needs attention</h1><ul>${rows}</ul><p>Update inventory in the management dashboard.</p></div>`,
+        }));
+      }
+    }
+    await Promise.allSettled(notifications);
   }
   return Response.json({ received: true });
 }
