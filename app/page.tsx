@@ -268,7 +268,10 @@ function Compare({ label, a, b }: { label: string; a: string; b: string }) {
 function Logo({ clipId: _clipId }: { clipId: string }) {
   return (
     <a className="wordmark" href="#" aria-label="Jewelry Dept. home">
-      <img src="/images/jewelry-dept-shopify-logo-transparent.png" alt="" aria-hidden="true" />
+      <span className="wordmarkText" aria-hidden="true">
+        <span>JEWELRY</span>
+        <span>DEPT.</span>
+      </span>
     </a>
   );
 }
