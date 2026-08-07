@@ -148,11 +148,11 @@ export default function Home() {
         <div className="productGrid">
           {products.map((product, index) => (
             <article className="card" key={product.name}>
-              <div className={`cardImage crop${index + 1}`}>
+              <a className={`cardImage crop${index + 1}`} href={`/products/${product.id}`} aria-label={`View details for ${product.name}`}>
                 <img src={product.image_url || siteImages.featured} alt={product.name} />
                 <span>{product.inventory > 0 ? `${product.inventory} AVAILABLE` : "SOLD OUT"}</span>
-              </div>
-              <div className="cardTop"><h3>{product.name}</h3><strong>${product.price.toLocaleString()}</strong></div>
+              </a>
+              <div className="cardTop"><h3><a href={`/products/${product.id}`}>{product.name}</a></h3><strong>${product.price.toLocaleString()}</strong></div>
               <p>{product.description || "Hand-finished by Jewelry Dept."}</p>
               <button disabled={product.inventory < 1} onClick={() => setCartItems(items => [...items, product.id])}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "+"}</span></button>
             </article>
@@ -250,7 +250,8 @@ export default function Home() {
       <footer>
         <Logo clipId="footerJewelryLogo" />
         <p>Fire without compromise.<br />Solid gold. Certified stones. Set by hand.</p>
-        <div><a href="#pieces">SHOP</a><a href="#custom">CUSTOM</a><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
+        <div className="footerLinks"><a href="#pieces">SHOP</a><a href="#custom">CUSTOM</a><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
+        <div className="footerPolicies"><a href="/policies/shipping">SHIPPING</a><a href="/policies/returns">RETURNS</a><a href="/policies/privacy">PRIVACY</a><a href="/policies/terms">TERMS</a></div>
         <small>© 2026 JEWELRY DEPT. · ALL RIGHTS RESERVED</small>
       </footer>
     </main>
