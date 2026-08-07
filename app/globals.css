@@ -508,3 +508,35 @@ footer p { color:#b9b9b9; }
   background:url('/images/jewelry-dept-logo.webp') center/100% 100% no-repeat;
   clip-path:polygon(39% 14%,64% 14%,64% 82%,39% 82%);
 }
+
+/* WHITE LETTERS-ONLY LOGO — NO EMBLEM */
+.wordmark::after { display:none; content:none; }
+.wordmark>img { display:none; }
+.wordmarkText {
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-family:'Knewave','Arial Black',sans-serif;
+  font-weight:400;
+  line-height:.76;
+  letter-spacing:-.045em;
+  text-align:center;
+  text-transform:uppercase;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.82));
+}
+.wordmarkText>span:first-child { font-size:54px; }
+.wordmarkText>span:last-child { font-size:43px; }
+footer .wordmarkText>span:first-child { font-size:47px; }
+footer .wordmarkText>span:last-child { font-size:38px; }
+@media(max-width:900px) {
+  .nav .wordmarkText>span:first-child { font-size:43px; }
+  .nav .wordmarkText>span:last-child { font-size:34px; }
+}
+@media(max-width:600px) {
+  .nav .wordmarkText>span:first-child { font-size:34px; }
+  .nav .wordmarkText>span:last-child { font-size:27px; }
+}
