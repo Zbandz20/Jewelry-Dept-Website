@@ -507,3 +507,64 @@ footer p { color:#b9b9b9; }
   transform:none;
   filter:brightness(0) invert(1) drop-shadow(0 2px 2px rgba(0,0,0,.82));
 }
+
+/* LAUNCH ESSENTIALS: PRODUCT DETAILS + CUSTOMER POLICIES */
+.cardImage { display:block; }
+.card h3 a:hover { color:#fff; }
+footer { grid-template-columns:1.15fr 1fr 1fr; }
+footer .footerLinks,footer .footerPolicies { display:flex; gap:18px; justify-content:flex-end; flex-wrap:wrap; }
+footer .footerPolicies { grid-column:2/-1; }
+.simpleNav {
+  width:100%;
+  min-height:86px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 5vw;
+  border-bottom:1px solid rgba(255,255,255,.14);
+  color:var(--shopify-blue);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.14em;
+}
+.policyPage,.productPage { min-height:100vh; background:#050505; color:#fff; }
+.policyPage article { width:min(850px,calc(100% - 36px)); margin:0 auto; padding:90px 0 120px; }
+.policyPage h1,.productDetailInfo h1 { font-size:clamp(48px,7vw,92px); }
+.policyUpdated { margin:18px 0 65px; color:#929da3; font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
+.policyPage article>section { padding:30px 0; border-top:1px solid rgba(255,255,255,.14); }
+.policyPage article>section h2,.careCard h2 { font-family:'Jost',sans-serif; font-size:18px; letter-spacing:.02em; }
+.policyPage article>section p,.careCard p { max-width:720px; color:#bac2c6; line-height:1.8; }
+.policyContact { margin-top:40px; padding:25px; display:flex; justify-content:space-between; gap:20px; background:#102733; border:1px solid #284655; border-radius:14px; }
+.policyContact a { color:var(--shopify-blue); }
+.productDetail { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr); min-height:calc(100vh - 86px); }
+.productDetailImage { min-height:680px; background:#111; }
+.productDetailImage img { width:100%; height:100%; object-fit:cover; display:block; }
+.productDetailInfo { padding:80px 7vw; align-self:center; }
+.productPrice { color:var(--shopify-blue); font-size:30px; font-weight:600; }
+.productDescription { color:#bcc4c8; line-height:1.75; }
+.detailBadges { display:flex; flex-wrap:wrap; gap:8px; margin:25px 0; }
+.detailBadges span { padding:10px 13px; border:1px solid #315364; border-radius:999px; color:#8ccfed; font-size:9px; letter-spacing:.09em; }
+.stockStatus { color:#f08f99; margin:20px 0; font-size:11px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; }
+.stockStatus.available { color:#74d2a8; }
+.productBack { margin:10px 0 35px; background:#fff; color:#050505; }
+.productFacts { margin:0; border-top:1px solid rgba(255,255,255,.14); }
+.productFacts div { display:flex; justify-content:space-between; gap:24px; padding:16px 0; border-bottom:1px solid rgba(255,255,255,.14); }
+.productFacts dt { color:#8e9ba2; font-size:10px; letter-spacing:.09em; text-transform:uppercase; }
+.productFacts dd { margin:0; text-align:right; font-size:12px; }
+.careCard { margin:30px 0; padding:24px; background:#0d171c; border:1px solid #263f4b; border-radius:14px; }
+.recoveryNotice { color:#c7d7df; line-height:1.7; }
+@media(max-width:900px) {
+  .productDetail { grid-template-columns:1fr; }
+  .productDetailImage { min-height:520px; }
+  .productDetailInfo { padding:60px 5vw 90px; }
+}
+@media(max-width:600px) {
+  footer { grid-template-columns:1fr; }
+  footer .footerLinks,footer .footerPolicies { grid-column:1; justify-content:flex-start; }
+  .policyPage article { padding:65px 0 90px; }
+  .policyContact { flex-direction:column; }
+  .productDetailImage { min-height:390px; }
+  .productDetailInfo { padding:48px 18px 70px; }
+  .productFacts div { display:grid; gap:7px; }
+  .productFacts dd { text-align:left; }
+}
