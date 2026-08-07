@@ -103,10 +103,15 @@ export default function AdminPhotos() {
 
   async function startRecovery() {
     setError("");
-    const response = await fetch("/api/admin/recovery", { cache: "no-store" });
+    setSaving("recovery");
+    const response = await fetch("/api/admin/recovery", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "request" }),
+    });
     const result = await response.json();
+    setSaving("");
     if (!response.ok) return setError(result.error || "Password recovery is not available.");
-    setSecurityQuestion(result.question);
+    setSecurityMessage(result.message || "A secure reset link has been sent.");
     setRecoveryMode(true);
   }
 
@@ -176,17 +181,11 @@ export default function AdminPhotos() {
 
   if (!data && recoveryMode) return (
     <main className="adminLogin">
-      <form onSubmit={recoverPassword}>
+      <form onSubmit={(event) => event.preventDefault()}>
         <span className="adminFlag"><i></i><i></i><i></i></span>
-        <p>JEWELRY DEPT.</p><h1>Recover<br /><em>access.</em></h1>
-        <label>{securityQuestion}</label>
-        <input type="text" value={securityAnswer} onChange={(e) => setSecurityAnswer(e.target.value)} autoFocus required autoComplete="off" />
-        <label htmlFor="recovery-password">New password</label>
-        <input id="recovery-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={10} required />
-        <label htmlFor="recovery-confirm">Confirm new password</label>
-        <input id="recovery-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={10} required />
-        {error && <small>{error}</small>}
-        <button>RESET PASSWORD</button>
+        <p>JEWELRY DEPT.</p><h1>Check your<br /><em>email.</em></h1>
+        <p className="recoveryNotice">{securityMessage}</p>
+        <small>The link expires in 30 minutes and works once.</small>
         <button className="textButton" type="button" onClick={() => { setRecoveryMode(false); setError(""); }}>BACK TO SIGN IN</button>
       </form>
     </main>
@@ -201,7 +200,7 @@ export default function AdminPhotos() {
         <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
         {error && <small>{error}</small>}
         <button>ENTER DASHBOARD</button>
-        <button className="textButton" type="button" onClick={startRecovery}>FORGOT PASSWORD?</button>
+        <button className="textButton" type="button" onClick={startRecovery} disabled={saving === "recovery"}>{saving === "recovery" ? "SENDING SECURE LINK…" : "FORGOT PASSWORD?"}</button>
       </form>
     </main>
   );
