@@ -568,3 +568,8 @@ footer .footerPolicies { grid-column:2/-1; }
   .productFacts div { display:grid; gap:7px; }
   .productFacts dd { text-align:left; }
 }
+
+/* FUNCTIONAL PRIVATE CLIENT SIGNUP */
+.signup form { flex-wrap:wrap; }
+.newsletterMessage { flex-basis:100%; margin-top:12px; color:#9fcde5; font-size:11px; line-height:1.5; }
+.signup button:disabled { opacity:.65; cursor:wait; }
