@@ -20,6 +20,9 @@ export default function Home() {
   const [customForm, setCustomForm] = useState({ name: "", email: "", phone: "", description: "", karat: "14K", grams: 10, stone: "Moissanite", complexity: "detailed" });
   const [customBusy, setCustomBusy] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [newsletterBusy, setNewsletterBusy] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const cart = cartItems.length;
   const cartLines = products.map(product => ({ ...product, quantity: cartItems.filter(id => id === product.id).length })).filter(product => product.quantity > 0);
@@ -71,6 +74,20 @@ export default function Home() {
     if (!response.ok) return setCustomMessage(result.error || "Your request could not be sent.");
     setCustomMessage(`Request #${result.request.id} received. No payment was taken. We will review and approve your final quote.`);
     setCustomForm(current => ({ ...current, description: "" }));
+  }
+
+  async function joinNewsletter(event: React.FormEvent) {
+    event.preventDefault();
+    setNewsletterMessage("");
+    setNewsletterBusy(true);
+    const response = await fetch("/api/newsletter", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: newsletterEmail }),
+    });
+    const result = await response.json();
+    setNewsletterBusy(false);
+    setNewsletterMessage(result.message || result.error || "Signup could not be completed.");
+    if (response.ok) setNewsletterEmail("");
   }
 
   const spot = Number(goldPricing?.market?.price || 0);
@@ -218,10 +235,11 @@ export default function Home() {
       <section className="signup">
         <p className="eyebrow">PRIVATE CLIENT LIST</p>
         <h2>First access.<br /><em>No restocks.</em></h2>
-        <form onSubmit={(event) => event.preventDefault()}>
+        <form onSubmit={joinNewsletter}>
           <label className="srOnly" htmlFor="email">Email address</label>
-          <input id="email" type="email" placeholder="YOUR EMAIL" required />
-          <button type="submit">JOIN THE LIST →</button>
+          <input id="email" type="email" placeholder="YOUR EMAIL" value={newsletterEmail} onChange={event => setNewsletterEmail(event.target.value)} required />
+          <button type="submit" disabled={newsletterBusy}>{newsletterBusy ? "JOINING…" : "JOIN THE LIST →"}</button>
+          {newsletterMessage && <small className="newsletterMessage" role="status">{newsletterMessage}</small>}
         </form>
       </section>
 
