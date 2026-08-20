@@ -36,7 +36,8 @@ export async function GET() {
       (SELECT COALESCE(SUM(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS gross,
       (SELECT COUNT(*)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '5 minutes') AS live_visitors,
       (SELECT COUNT(DISTINCT session_id)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '24 hours') AS visitors_today,
-      (SELECT COALESCE(AVG(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS average_order
+      (SELECT COALESCE(AVG(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS average_order,
+      (SELECT COUNT(*)::int FROM jd_orders WHERE fulfillment_hold = TRUE AND fraud_review_status = 'pending') AS fraud_reviews
   `;
   const products = await sql`SELECT * FROM jd_products ORDER BY id`;
   const orders = await sql`SELECT * FROM jd_orders ORDER BY created_at DESC LIMIT 25`;
@@ -120,6 +121,39 @@ export async function POST(request: Request) {
   if (body.type === "order-status") {
     await sql`UPDATE jd_orders SET status = ${String(body.status)} WHERE id = ${Number(body.id)}`;
     return Response.json({ ok: true });
+  }
+  if (body.type === "fraud-review") {
+    const id = Number(body.id);
+    const decision = String(body.decision || "");
+    if (!Number.isInteger(id) || !["approve", "reject"].includes(decision)) {
+      return Response.json({ error: "Invalid fraud-review decision." }, { status: 400 });
+    }
+    if (!(await verifyAdminPassword(String(body.password || "")))) {
+      return Response.json({ error: "Dashboard password is incorrect." }, { status: 401 });
+    }
+
+    const [order] = decision === "approve"
+      ? await sql`
+          UPDATE jd_orders SET
+            fraud_review_status = 'approved',
+            fulfillment_hold = FALSE,
+            status = CASE WHEN status = 'review_required' THEN 'paid' ELSE status END
+          WHERE id = ${id} AND fraud_review_status = 'pending'
+          RETURNING *
+        `
+      : await sql`
+          UPDATE jd_orders SET
+            fraud_risk_level = 'highest',
+            fraud_risk_score = GREATEST(COALESCE(fraud_risk_score, 0), 90),
+            fraud_signals = COALESCE(fraud_signals, '[]'::jsonb) || jsonb_build_array('Management marked this order as suspected fraud.'),
+            fraud_review_status = 'rejected',
+            fulfillment_hold = TRUE,
+            status = 'fraud_rejected'
+          WHERE id = ${id} AND fraud_review_status = 'pending'
+          RETURNING *
+        `;
+    if (!order) return Response.json({ error: "This order was already reviewed or could not be found." }, { status: 409 });
+    return Response.json({ order });
   }
   if (body.type === "custom-request-decision") {
     const id = Number(body.id);
