@@ -126,7 +126,16 @@ export async function ensureAdminTables() {
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS label_url TEXT NOT NULL DEFAULT ''`;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS tracking_number TEXT NOT NULL DEFAULT ''`;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS tracking_url TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS stripe_payment_intent_id TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS stripe_charge_id TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS fraud_risk_level TEXT NOT NULL DEFAULT 'not_assessed'`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS fraud_risk_score INTEGER`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS fraud_signals JSONB NOT NULL DEFAULT '[]'::jsonb`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS fraud_review_status TEXT NOT NULL DEFAULT 'clear'`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS fulfillment_hold BOOLEAN NOT NULL DEFAULT FALSE`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS jd_orders_stripe_session_idx ON jd_orders(stripe_session_id) WHERE stripe_session_id IS NOT NULL`;
+  await sql`CREATE INDEX IF NOT EXISTS jd_orders_stripe_charge_idx ON jd_orders(stripe_charge_id) WHERE stripe_charge_id <> ''`;
+  await sql`CREATE INDEX IF NOT EXISTS jd_orders_fraud_review_idx ON jd_orders(fulfillment_hold, fraud_review_status)`;
   await sql`
     CREATE TABLE IF NOT EXISTS jd_assets (
       id TEXT PRIMARY KEY,
