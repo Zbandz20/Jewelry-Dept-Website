@@ -6,9 +6,25 @@ import "./security.css";
 import "./catalog.css";
 
 type DashboardData = {
-  summary: { total_orders: number; gross: number; live_visitors: number; visitors_today: number; average_order: number };
+  summary: { total_orders: number; gross: number; live_visitors: number; visitors_today: number; average_order: number; fraud_reviews: number };
   products: Array<{ id: number; name: string; sku: string; price: number; inventory: number; active: boolean; image_url: string; description: string }>;
-  orders: Array<{ id: number; customer_name: string; customer_email: string; total: number; status: string; created_at: string; shipping_address?: { address?: Record<string,string> }; label_url?: string; tracking_number?: string; tracking_url?: string }>;
+  orders: Array<{
+    id: number;
+    customer_name: string;
+    customer_email: string;
+    total: number;
+    status: string;
+    created_at: string;
+    shipping_address?: { address?: Record<string,string> };
+    label_url?: string;
+    tracking_number?: string;
+    tracking_url?: string;
+    fraud_risk_level?: "normal" | "elevated" | "highest" | "not_assessed";
+    fraud_risk_score?: number | null;
+    fraud_signals?: string[];
+    fraud_review_status?: "clear" | "pending" | "approved" | "rejected" | "disputed";
+    fulfillment_hold?: boolean;
+  }>;
   assets: Array<{ id: string; label: string; data_url: string; updated_at: string }>;
   customRequests: Array<{ id: number; customer_name: string; customer_email: string; customer_phone: string; description: string; karat: string; grams: number; stone: string; complexity: string; spot_price: number; metal_cost: number; metal_allowance: number; craftsmanship: number; estimated_total: number; approved_total?: number; status: string; created_at: string }>;
   checkoutEnabled: boolean;
@@ -30,6 +46,7 @@ export default function AdminPhotos() {
   const [securityMessage, setSecurityMessage] = useState("");
   const [approvalPassword, setApprovalPassword] = useState("");
   const [approvalPhrase, setApprovalPhrase] = useState("");
+  const [fraudPassword, setFraudPassword] = useState("");
   const [approvedTotal, setApprovedTotal] = useState<Record<number, number>>({});
 
   async function load() {
@@ -168,6 +185,22 @@ export default function AdminPhotos() {
     await load(); window.open(result.labelUrl, "_blank", "noopener,noreferrer");
   }
 
+  async function reviewFraudOrder(id: number, decision: "approve" | "reject") {
+    if (!fraudPassword) return setError("Enter the dashboard password before reviewing a held order.");
+    const message = decision === "approve"
+      ? "Release this order for fulfillment? Confirm the customer and payment details in Stripe first."
+      : "Keep this order blocked as suspected fraud? This does not issue a refund in Stripe.";
+    if (!window.confirm(message)) return;
+    setSaving(`fraud-${id}`); setError("");
+    const response = await fetch("/api/admin/dashboard", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "fraud-review", id, decision, password: fraudPassword }),
+    });
+    const result = await response.json(); setSaving("");
+    if (!response.ok) return setError(result.error || "The fraud review could not be updated.");
+    setFraudPassword(""); await load();
+  }
+
   async function decideCustomRequest(id: number, decision: "approved" | "declined") {
     setSaving(`custom-${id}`); setError("");
     const response = await fetch("/api/admin/dashboard", {
@@ -222,6 +255,7 @@ export default function AdminPhotos() {
             <Metric label="Total orders" value={String(data.summary.total_orders)} note="All-time orders" />
             <Metric label="Gross revenue" value={money(data.summary.gross)} note="Excludes cancelled orders" />
             <Metric label="Average order" value={money(data.summary.average_order)} note="Across all orders" />
+            <Metric label="Fraud reviews" value={String(data.summary.fraud_reviews)} note="Orders blocked from shipping" />
           </div>
           <div className="adminPanel"><h2>Inventory attention</h2>{data.products.filter(p => p.inventory <= 5).map(p => <div className="alertRow" key={p.id}><span>{p.name}<small>{p.sku}</small></span><b>{p.inventory} LEFT</b></div>)}</div>
         </>}
@@ -242,8 +276,35 @@ export default function AdminPhotos() {
         </div>}
 
         {tab === "orders" && <div className="adminPanel">
-          <div className="panelHead"><div><p>SALES</p><h2>Recent orders</h2></div><span>{data.orders.length} records shown</span></div>
-          {data.orders.length ? <div className="orderTable">{data.orders.map(order => <div key={order.id}><b>#{order.id}</b><span>{order.customer_name}<small>{order.customer_email}</small></span><span>{new Date(order.created_at).toLocaleDateString()}</span><strong>{money(order.total)}</strong><span className="labelActions">{order.label_url ? <a href={order.label_url} target="_blank">PRINT LABEL</a> : <button disabled={saving === `label-${order.id}`} onClick={() => createLabel(order.id)}>{saving === `label-${order.id}` ? "LOADING…" : "GET LABEL"}</button>}{order.tracking_number && <small>{order.tracking_number}</small>}</span></div>)}</div> : <div className="emptyState"><b>No orders recorded yet.</b><p>Orders will appear here when checkout is connected.</p></div>}
+          <div className="panelHead"><div><p>SALES & FRAUD REVIEW</p><h2>Recent orders</h2></div><span>{data.orders.filter(order => order.fulfillment_hold).length} held · {data.orders.length} shown</span></div>
+          {data.orders.some(order => order.fulfillment_hold && order.fraud_review_status === "pending") && <div className="fraudNotice">
+            <div><b>Suspicious orders are blocked from shipping</b><p>Risk indicators are not proof of fraud. Compare the customer, address, payment, and Stripe Radar details before approving, rejecting, refunding, or contacting the customer.</p></div>
+            <label>Dashboard password<input type="password" value={fraudPassword} onChange={event => setFraudPassword(event.target.value)} autoComplete="current-password" placeholder="Required to release an order" /></label>
+          </div>}
+          {error && <small className="panelError">{error}</small>}
+          {data.orders.length ? <div className="orderReviewList">{data.orders.map(order => {
+            const riskLevel = order.fraud_risk_level || "not_assessed";
+            const riskSignals = Array.isArray(order.fraud_signals) ? order.fraud_signals : [];
+            const pendingReview = Boolean(order.fulfillment_hold && order.fraud_review_status === "pending");
+            const blocked = order.fraud_review_status === "rejected" || order.fraud_review_status === "disputed";
+            return <article className={`orderReviewCard ${order.fulfillment_hold ? "held" : ""}`} key={order.id}>
+              <div className="orderReviewHead">
+                <div><span>ORDER #{order.id}</span><h3>{order.customer_name}</h3><p>{order.customer_email}</p></div>
+                <div className="orderValue"><strong>{money(order.total)}</strong><b className={`riskBadge risk-${riskLevel.replace("_", "-")}`}>{riskLevel.replace("_", " ")} risk{order.fraud_risk_score == null ? "" : ` · ${order.fraud_risk_score}/100`}</b></div>
+              </div>
+              <div className="orderMeta"><span>{new Date(order.created_at).toLocaleString()}</span><span>ORDER: {order.status}</span><span>REVIEW: {order.fraud_review_status || "clear"}</span></div>
+              {riskSignals.length > 0 && <ul className="riskSignals">{riskSignals.map((signal, index) => <li key={index}>{signal}</li>)}</ul>}
+              <div className="orderActions">
+                {pendingReview ? <div className="fraudDecisionButtons">
+                  <button disabled={saving === `fraud-${order.id}`} onClick={() => reviewFraudOrder(order.id, "approve")}>APPROVE FULFILLMENT</button>
+                  <button className="fraudReject" disabled={saving === `fraud-${order.id}`} onClick={() => reviewFraudOrder(order.id, "reject")}>MARK SUSPECTED FRAUD</button>
+                </div> : blocked ? <small className="blockedOrder">DO NOT SHIP · Handle any refund or dispute directly in Stripe.</small> : <span className="labelActions">
+                  {order.label_url ? <a href={order.label_url} target="_blank">PRINT LABEL</a> : <button disabled={saving === `label-${order.id}`} onClick={() => createLabel(order.id)}>{saving === `label-${order.id}` ? "LOADING…" : "GET LABEL"}</button>}
+                  {order.tracking_number && <small>{order.tracking_number}</small>}
+                </span>}
+              </div>
+            </article>;
+          })}</div> : <div className="emptyState"><b>No orders recorded yet.</b><p>Orders will appear here when checkout is connected.</p></div>}
         </div>}
 
         {tab === "custom requests" && <div className="adminPanel customRequestPanel">
