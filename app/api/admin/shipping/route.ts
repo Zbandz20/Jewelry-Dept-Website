@@ -14,6 +14,9 @@ export async function POST(request: Request) {
   const sql = getSql();
   const [order] = await sql`SELECT * FROM jd_orders WHERE id = ${Number(body.orderId)} LIMIT 1`;
   if (!order) return Response.json({ error: "Order not found." }, { status: 404 });
+  if (order.fulfillment_hold) {
+    return Response.json({ error: "This order is on a fraud-review hold. Approve it in Orders before creating a shipping label." }, { status: 409 });
+  }
 
   if (body.action === "quote") {
     const shipping = order.shipping_address || {};
