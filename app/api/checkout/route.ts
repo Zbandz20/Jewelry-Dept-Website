@@ -39,6 +39,7 @@ export async function POST(request: Request) {
   form.set("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
   form.set("cancel_url", `${origin}/#pieces`);
   form.set("customer_creation", "always");
+  form.set("phone_number_collection[enabled]", "true");
   form.set("billing_address_collection", "required");
   form.set("shipping_address_collection[allowed_countries][0]", "US");
   form.set("shipping_address_collection[allowed_countries][1]", "MX");
@@ -55,6 +56,11 @@ export async function POST(request: Request) {
   form.set("shipping_options[0][shipping_rate_data][delivery_estimate][maximum][value]", "7");
   form.set("metadata[shipping_policy]", freeShipping ? "free_over_100" : `standard_${standardShippingCents}`);
   form.set("metadata[cart]", JSON.stringify(cartMeta));
+  form.set("metadata[fraud_screening]", "stripe_radar_plus_internal_review");
+  form.set("payment_intent_data[description]", "Jewelry Dept. online order");
+  form.set("payment_intent_data[metadata][store]", "jewelry_dept");
+  form.set("payment_intent_data[metadata][item_count]", String(cartMeta.reduce((total, item) => total + item.quantity, 0)));
+  form.set("payment_intent_data[metadata][merchandise_subtotal_cents]", String(merchandiseSubtotalCents));
 
   const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
