@@ -3,6 +3,26 @@
 import { useEffect, useRef, useState } from "react";
 
 type Product = { id: number; name: string; description: string; price: number; inventory: number; image_url: string };
+const shopCategories = ["ALL", "CHAINS", "BRACELETS", "EARRINGS", "RINGS", "PENDANTS", "SETS & WATCHES"] as const;
+function productCategory(name: string) {
+  const value = name.toLowerCase();
+  if (value.includes("set") || value.includes("watch")) return "SETS & WATCHES";
+  if (value.includes("bracelet")) return "BRACELETS";
+  if (value.includes("earring") || value.includes("stud")) return "EARRINGS";
+  if (value.includes("ring")) return "RINGS";
+  if (value.includes("pendant") || value.includes("cross")) return "PENDANTS";
+  if (value.includes("chain")) return "CHAINS";
+  return "ALL";
+}
+function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_start", productId?: number, amount?: number) {
+  const sessionId = sessionStorage.getItem("jd-session") || "";
+  if (!sessionId) return;
+  fetch("/api/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, eventName, productId, amount, path: window.location.pathname }),
+  }).catch(() => {});
+}
 const fallbackProducts: Product[] = [
   { id: -1, name: "6mm Moissanite Cuban Bracelet", description: "Authentic 6mm Moissanite Cuban Bracelet from Jewelry Dept.", price: 250, inventory: 0, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/AAD37993-02AD-4948-BF25-D7A330AC1D91.jpg?v=1772470224&width=1200" },
 ];
@@ -23,11 +43,23 @@ export default function Home() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [newsletterBusy, setNewsletterBusy] = useState(false);
+  const [shopCategory, setShopCategory] = useState<(typeof shopCategories)[number]>("ALL");
+  const [shopSort, setShopSort] = useState("featured");
+  const [availableOnly, setAvailableOnly] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const cart = cartItems.length;
   const cartLines = products.map(product => ({ ...product, quantity: cartItems.filter(id => id === product.id).length })).filter(product => product.quantity > 0);
   const cartTotal = cartLines.reduce((total, product) => total + product.price * product.quantity, 0);
   const featuredProduct = products[0] || fallbackProducts[0];
+  const visibleProducts = products
+    .filter(product => shopCategory === "ALL" || productCategory(product.name) === shopCategory)
+    .filter(product => !availableOnly || product.inventory > 0)
+    .sort((a, b) => shopSort === "price-low" ? a.price - b.price : shopSort === "price-high" ? b.price - a.price : shopSort === "name" ? a.name.localeCompare(b.name) : a.id - b.id);
+
+  function addToBag(product: Product) {
+    setCartItems(items => [...items, product.id]);
+    trackStoreEvent("add_to_cart", product.id, product.price);
+  }
 
   useEffect(() => {
     fetch("/api/site-content").then(response => response.ok ? response.json() : null).then(content => {
@@ -59,6 +91,7 @@ export default function Home() {
 
   async function startCheckout() {
     setCheckoutError("");
+    trackStoreEvent("checkout_start", undefined, cartTotal);
     if (!checkoutEnabled) return setCheckoutError("Checkout is opening soon.");
     const counts = cartItems.reduce<Record<number, number>>((all, id) => ({ ...all, [id]: (all[id] || 0) + 1 }), {});
     setCheckoutBusy(true);
@@ -193,7 +226,7 @@ export default function Home() {
           <div className="inventoryMaterial"><b>SOLID 925 STERLING SILVER</b><span>MOISSANITE STONES</span></div>
           <div className="buyRow">
             <div><small>FROM</small><strong>${featuredProduct.price.toLocaleString()}</strong></div>
-            <button disabled={featuredProduct.inventory < 1} onClick={() => setCartItems(items => [...items, featuredProduct.id])}>{featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG — SHIPS FREE"}</button>
+            <button disabled={featuredProduct.inventory < 1} onClick={() => addToBag(featuredProduct)}>{featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG — SHIPS FREE"}</button>
           </div>
           <div className="assurances"><span>✓ CERTIFIED STONES</span><span>✓ 30-DAY RETURNS</span><span>✓ LIFETIME SERVICE</span></div>
         </div>
@@ -201,8 +234,18 @@ export default function Home() {
 
       <section className="pieces" id="pieces">
         <div className="sectionHeading"><p className="eyebrow">THE COLLECTION</p><h2>Shop <em>Jewelry Dept.</em></h2></div>
+        <div className="shopTools">
+          <div className="categoryFilters" role="group" aria-label="Filter products by category">
+            {shopCategories.map(category => <button type="button" className={shopCategory === category ? "active" : ""} onClick={() => setShopCategory(category)} key={category}>{category}</button>)}
+          </div>
+          <div className="shopOptions">
+            <span>{visibleProducts.length} {visibleProducts.length === 1 ? "PIECE" : "PIECES"}</span>
+            <label><input type="checkbox" checked={availableOnly} onChange={event => setAvailableOnly(event.target.checked)} /> IN STOCK ONLY</label>
+            <label><span className="srOnly">Sort products</span><select value={shopSort} onChange={event => setShopSort(event.target.value)}><option value="featured">FEATURED</option><option value="price-low">PRICE: LOW TO HIGH</option><option value="price-high">PRICE: HIGH TO LOW</option><option value="name">NAME: A–Z</option></select></label>
+          </div>
+        </div>
         <div className="productGrid">
-          {products.map((product, index) => (
+          {visibleProducts.map((product, index) => (
             <article className="card" key={product.name}>
               <a className={`cardImage crop${index + 1}`} href={`/products/${product.id}`} aria-label={`View details for ${product.name}`}>
                 <img src={product.image_url || siteImages.featured} alt={product.name} />
@@ -210,9 +253,10 @@ export default function Home() {
               </a>
               <div className="cardTop"><h3><a href={`/products/${product.id}`}>{product.name}</a></h3><strong>${product.price.toLocaleString()}</strong></div>
               <p>{product.description || "Hand-finished by Jewelry Dept."}</p>
-              <button disabled={product.inventory < 1} onClick={() => setCartItems(items => [...items, product.id])}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "+"}</span></button>
+              <button disabled={product.inventory < 1} onClick={() => addToBag(product)}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "+"}</span></button>
             </article>
           ))}
+          {!visibleProducts.length && <div className="emptyCollection"><b>No pieces match those filters.</b><button type="button" onClick={() => { setShopCategory("ALL"); setAvailableOnly(false); }}>RESET FILTERS</button></div>}
         </div>
       </section>
 
