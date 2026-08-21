@@ -153,6 +153,19 @@ export async function ensureAdminTables() {
   `;
   await sql`CREATE INDEX IF NOT EXISTS jd_visits_created_idx ON jd_visits(created_at)`;
   await sql`
+    CREATE TABLE IF NOT EXISTS jd_events (
+      id BIGSERIAL PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      event_name TEXT NOT NULL,
+      product_id INTEGER,
+      path TEXT NOT NULL DEFAULT '/',
+      amount NUMERIC(12,2),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS jd_events_created_idx ON jd_events(created_at)`;
+  await sql`CREATE INDEX IF NOT EXISTS jd_events_name_created_idx ON jd_events(event_name, created_at)`;
+  await sql`
     CREATE TABLE IF NOT EXISTS jd_custom_requests (
       id SERIAL PRIMARY KEY,
       customer_name TEXT NOT NULL,
@@ -217,6 +230,12 @@ export async function ensureAdminTables() {
       ELSE description
     END, updated_at = NOW()
     WHERE name IN ('8mm 22-inch Cuban Chain & Bracelet Set', '13mm Two-Tone Cuban Chain', '13mm 22-inch Cuban Chain with KC Royals Pendant', '10mm 22-inch Cuban Chain & Bracelet Set', '3mm 22-inch Tennis Chain, Pendant & Bracelet Set', '3mm 22-inch Tennis Chain with Pendant', '10mm Halo Earrings with 3ct Center Stone')
+  `;
+  await sql`
+    UPDATE jd_products
+    SET description = name || ' crafted in solid 925 sterling silver and set with moissanite stones. Finished and inspected by Jewelry Dept.',
+        updated_at = NOW()
+    WHERE description = '' OR description LIKE 'Authentic % from Jewelry Dept.'
   `;
   await sql`
     INSERT INTO jd_assets (id, label, data_url) VALUES
