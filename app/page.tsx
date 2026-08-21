@@ -14,7 +14,7 @@ function productCategory(name: string) {
   if (value.includes("chain")) return "CHAINS";
   return "ALL";
 }
-function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_start", productId?: number, amount?: number) {
+function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_start" | "newsletter_signup" | "custom_request", productId?: number, amount?: number) {
   const sessionId = sessionStorage.getItem("jd-session") || "";
   if (!sessionId) return;
   fetch("/api/track", {
@@ -111,6 +111,7 @@ export default function Home() {
     const response = await fetch("/api/custom-quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(customForm) });
     const result = await response.json(); setCustomBusy(false);
     if (!response.ok) return setCustomMessage(result.error || "Your request could not be sent.");
+    trackStoreEvent("custom_request", undefined, Number(result.request?.estimated_total || 0));
     setCustomMessage(`Request #${result.request.id} received. No payment was taken. We will review and approve your final quote.`);
     setCustomForm(current => ({ ...current, description: "" }));
   }
@@ -126,7 +127,7 @@ export default function Home() {
     const result = await response.json();
     setNewsletterBusy(false);
     setNewsletterMessage(result.message || result.error || "Signup could not be completed.");
-    if (response.ok) setNewsletterEmail("");
+    if (response.ok) { trackStoreEvent("newsletter_signup"); setNewsletterEmail(""); }
   }
 
   const goldMarket = goldPricing?.metals?.gold || goldPricing?.market;
