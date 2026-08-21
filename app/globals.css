@@ -764,3 +764,89 @@ footer .footerPolicies { grid-column:2/-1; }
   .goldKaratPrices { gap:6px 9px; }
   .goldKaratPrices b { font-size:7px; }
 }
+
+
+/* PROFESSIONAL SHOP FILTERS */
+.shopTools {
+  display:grid;
+  gap:18px;
+  margin:32px 0 26px;
+  padding:18px 0;
+  border-top:1px solid rgba(255,255,255,.14);
+  border-bottom:1px solid rgba(255,255,255,.14);
+}
+.categoryFilters {
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:2px;
+  scrollbar-width:none;
+}
+.categoryFilters::-webkit-scrollbar { display:none; }
+.categoryFilters button {
+  flex:0 0 auto;
+  min-height:36px;
+  padding:0 14px;
+  border:1px solid #294653;
+  border-radius:999px;
+  background:#0b1115;
+  color:#aebbc2;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.11em;
+  cursor:pointer;
+}
+.categoryFilters button:hover,.categoryFilters button.active {
+  border-color:var(--shopify-blue);
+  background:#102733;
+  color:#fff;
+}
+.shopOptions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:18px;
+  color:#8fa0a8;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.1em;
+}
+.shopOptions>span { margin-right:auto; color:var(--shopify-blue); }
+.shopOptions label { display:flex; align-items:center; gap:8px; cursor:pointer; }
+.shopOptions input { accent-color:var(--shopify-blue); }
+.shopOptions select {
+  min-height:36px;
+  padding:0 32px 0 12px;
+  border:1px solid #294653;
+  border-radius:999px;
+  background:#0b1115;
+  color:#fff;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.08em;
+}
+.emptyCollection {
+  grid-column:1/-1;
+  min-height:220px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:18px;
+  border:1px dashed #294653;
+  color:#9eabb1;
+}
+.emptyCollection button {
+  border:0;
+  border-bottom:1px solid currentColor;
+  background:transparent;
+  color:var(--shopify-blue);
+  font-size:9px;
+  letter-spacing:.1em;
+  cursor:pointer;
+}
+@media(max-width:600px) {
+  .shopTools { margin-top:22px; }
+  .shopOptions { display:grid; grid-template-columns:1fr auto; gap:12px; }
+  .shopOptions>span { grid-column:1/-1; }
+  .shopOptions select { max-width:170px; }
+}
