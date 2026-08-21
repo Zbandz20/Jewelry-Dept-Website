@@ -99,6 +99,9 @@ export default function Home() {
   const goldMarket = goldPricing?.metals?.gold || goldPricing?.market;
   const silverMarket = goldPricing?.metals?.silver;
   const spot = Number(goldMarket?.price || 0);
+  const goldPerGram = Number(goldMarket?.pricePerGram || 0);
+  const gold10KPerGram = goldPerGram * Number(goldPricing?.purity?.["10K"] || 0.417);
+  const gold14KPerGram = goldPerGram * Number(goldPricing?.purity?.["14K"] || 0.585);
   const purity = Number(goldPricing?.purity?.[customForm.karat] || 0);
   const craft = goldPricing?.craftsmanship?.[customForm.complexity];
   const metalCost = spot ? (spot / 31.1034768) * Number(customForm.grams) * purity : 0;
@@ -174,7 +177,7 @@ export default function Home() {
             <div><span className="metalSymbol">AU</span><p>GOLD <small>XAU</small></p></div>
             <strong>{formatMarketPrice(goldMarket?.price)}</strong>
             <p>PER TROY OUNCE</p>
-            <div className="metalQuoteFoot"><b>{formatMarketPrice(goldMarket?.pricePerGram)} / GRAM</b><span className={goldMarket?.live ? "marketLive" : "marketReference"}>{goldMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
+            <div className="metalQuoteFoot"><div className="goldKaratPrices" aria-label="Gold market value per gram by karat"><b>24K {formatMarketPrice(goldPerGram)} / G</b><b>14K {formatMarketPrice(gold14KPerGram)} / G</b><b>10K {formatMarketPrice(gold10KPerGram)} / G</b></div><span className={goldMarket?.live ? "marketLive" : "marketReference"}>{goldMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
           </article>
           <article className="silverQuote">
             <div><span className="metalSymbol">AG</span><p>SILVER <small>XAG</small></p></div>
