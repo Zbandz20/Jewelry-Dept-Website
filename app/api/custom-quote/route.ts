@@ -1,4 +1,5 @@
 import { ensureAdminTables, getSql } from "@/lib/admin";
+import { escapeHtml, ownerEmail, sendTransactionalEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -88,5 +89,21 @@ export async function POST(request: Request) {
       (${name}, ${email}, ${phone}, ${description}, ${karat}, ${grams}, ${stone}, ${complexity}, ${market.price}, ${quote.purity}, ${quote.metalCost}, ${quote.metalAllowance}, ${quote.craftsmanship}, ${quote.estimate}, 'pending')
     RETURNING id, estimated_total, status, created_at
   `;
+  const requestId = Number(customRequest.id);
+  const estimate = Number(customRequest.estimated_total || 0).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const notifications: Array<Promise<unknown>> = [
+    sendTransactionalEmail({
+      to: email,
+      subject: `Jewelry Dept. custom request #${requestId} received`,
+      html: `<div style="font-family:Arial,sans-serif;color:#111"><p style="letter-spacing:.12em">JEWELRY DEPT.</p><h1>Your custom request is under review.</h1><p>We received your request for a ${escapeHtml(karat)} piece using ${escapeHtml(stone)}. The preliminary estimate is <strong>${escapeHtml(estimate)}</strong>.</p><p>No payment was taken. Management must review the design and approve a final quote before payment is available.</p><p>Request number: <strong>#${requestId}</strong></p></div>`,
+    }),
+  ];
+  const admin = ownerEmail();
+  if (admin) notifications.push(sendTransactionalEmail({
+    to: admin,
+    subject: `New Jewelry Dept. custom request #${requestId}`,
+    html: `<div style="font-family:Arial,sans-serif;color:#111"><h1>New custom request #${requestId}</h1><p><strong>${escapeHtml(name)}</strong> · ${escapeHtml(email)} · ${escapeHtml(phone)}</p><p>${escapeHtml(karat)} · ${escapeHtml(String(grams))} grams · ${escapeHtml(stone)} · ${escapeHtml(complexity)}</p><p>${escapeHtml(description)}</p><p>Preliminary estimate: <strong>${escapeHtml(estimate)}</strong></p><p>Review it in the Jewelry Dept. management dashboard.</p></div>`,
+  }));
+  await Promise.allSettled(notifications);
   return Response.json({ request: customRequest, market, message: "Request received. No payment was taken. Jewelry Dept. will review and approve the final quote." });
 }
