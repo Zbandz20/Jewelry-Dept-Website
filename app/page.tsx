@@ -276,6 +276,39 @@ export default function Home() {
         </form>
       </section>
 
+      <section className="signup">
+        <p className="eyebrow">PRIVATE CLIENT LIST</p>
+        <h2>First access.<br /><em>No restocks.</em></h2>
+        <form onSubmit={joinNewsletter}>
+          <label className="srOnly" htmlFor="email">Email address</label>
+          <input id="email" type="email" placeholder="YOUR EMAIL" value={newsletterEmail} onChange={event => setNewsletterEmail(event.target.value)} required />
+          <button type="submit" disabled={newsletterBusy}>{newsletterBusy ? "JOINING…" : "JOIN THE LIST →"}</button>
+          {newsletterMessage && <small className="newsletterMessage" role="status">{newsletterMessage}</small>}
+        </form>
+      </section>
+
+      {cartOpen && <div className="cartOverlay" onClick={() => setCartOpen(false)}>
+        <aside className="cartDrawer" role="dialog" aria-modal="true" aria-label="Shopping bag" onClick={event => event.stopPropagation()}>
+          <div className="cartDrawerHead"><div><p>YOUR BAG</p><h2>{cart} {cart === 1 ? "piece" : "pieces"}</h2></div><button onClick={() => setCartOpen(false)} aria-label="Close shopping bag">CLOSE ×</button></div>
+          <div className="cartLines">
+            {cartLines.map(product => <article key={product.id}>
+              <img src={product.image_url || siteImages.featured} alt="" />
+              <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button onClick={() => setCartItems(items => { const index = items.indexOf(product.id); return index < 0 ? items : items.filter((_, itemIndex) => itemIndex !== index); })}>REMOVE ONE</button></div>
+              <strong>${(product.price * product.quantity).toLocaleString()}</strong>
+            </article>)}
+          </div>
+          <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
+          <p className="cartNote">{cartTotal > 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : "Standard shipping is $9.95 and will be shown at checkout. Add $" + Math.max(0.01, 100.01 - cartTotal).toFixed(2) + " more for free shipping."}</p>
+          {checkoutError && <p className="cartError">{checkoutError}</p>}
+          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1}>{checkoutBusy ? "OPENING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
+        </aside>
+      </div>}
+
+      {cart > 0 && <div className="checkoutBar">
+        <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} · ${cartTotal.toLocaleString()}</b>{checkoutError && <span>{checkoutError}</span>}</div>
+        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
+      </div>}
+
       <section className="marketplaceReviews" id="reviews">
         <div className="reviewsHeading">
           <div>
@@ -315,39 +348,6 @@ export default function Home() {
           <a href="https://www.facebook.com/marketplace/profile/100091377385021/" target="_blank" rel="noreferrer">VIEW OUR MARKETPLACE PROFILE ↗</a>
         </div>
       </section>
-
-      <section className="signup">
-        <p className="eyebrow">PRIVATE CLIENT LIST</p>
-        <h2>First access.<br /><em>No restocks.</em></h2>
-        <form onSubmit={joinNewsletter}>
-          <label className="srOnly" htmlFor="email">Email address</label>
-          <input id="email" type="email" placeholder="YOUR EMAIL" value={newsletterEmail} onChange={event => setNewsletterEmail(event.target.value)} required />
-          <button type="submit" disabled={newsletterBusy}>{newsletterBusy ? "JOINING…" : "JOIN THE LIST →"}</button>
-          {newsletterMessage && <small className="newsletterMessage" role="status">{newsletterMessage}</small>}
-        </form>
-      </section>
-
-      {cartOpen && <div className="cartOverlay" onClick={() => setCartOpen(false)}>
-        <aside className="cartDrawer" role="dialog" aria-modal="true" aria-label="Shopping bag" onClick={event => event.stopPropagation()}>
-          <div className="cartDrawerHead"><div><p>YOUR BAG</p><h2>{cart} {cart === 1 ? "piece" : "pieces"}</h2></div><button onClick={() => setCartOpen(false)} aria-label="Close shopping bag">CLOSE ×</button></div>
-          <div className="cartLines">
-            {cartLines.map(product => <article key={product.id}>
-              <img src={product.image_url || siteImages.featured} alt="" />
-              <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button onClick={() => setCartItems(items => { const index = items.indexOf(product.id); return index < 0 ? items : items.filter((_, itemIndex) => itemIndex !== index); })}>REMOVE ONE</button></div>
-              <strong>${(product.price * product.quantity).toLocaleString()}</strong>
-            </article>)}
-          </div>
-          <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
-          <p className="cartNote">{cartTotal > 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : "Standard shipping is $9.95 and will be shown at checkout. Add $" + Math.max(0.01, 100.01 - cartTotal).toFixed(2) + " more for free shipping."}</p>
-          {checkoutError && <p className="cartError">{checkoutError}</p>}
-          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1}>{checkoutBusy ? "OPENING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
-        </aside>
-      </div>}
-
-      {cart > 0 && <div className="checkoutBar">
-        <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} · ${cartTotal.toLocaleString()}</b>{checkoutError && <span>{checkoutError}</span>}</div>
-        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
-      </div>}
 
       <footer>
         <Logo clipId="footerJewelryLogo" />
