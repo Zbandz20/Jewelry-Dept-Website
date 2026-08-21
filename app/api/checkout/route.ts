@@ -43,7 +43,8 @@ export async function POST(request: Request) {
   form.set("billing_address_collection", "required");
   form.set("shipping_address_collection[allowed_countries][0]", "US");
   form.set("shipping_address_collection[allowed_countries][1]", "MX");
-  form.set("allow_promotion_codes", "true");\n  if (process.env.STRIPE_AUTOMATIC_TAX === "true") form.set("automatic_tax[enabled]", "true");
+  form.set("allow_promotion_codes", "true");
+  if (process.env.STRIPE_AUTOMATIC_TAX === "true") form.set("automatic_tax[enabled]", "true");
   const freeShipping = merchandiseSubtotalCents > 10_000;
   const standardShippingCents = Math.max(0, Number(process.env.STANDARD_SHIPPING_CENTS || 995));
   form.set("shipping_options[0][shipping_rate_data][type]", "fixed_amount");
