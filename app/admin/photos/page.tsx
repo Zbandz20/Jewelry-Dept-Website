@@ -28,7 +28,10 @@ type DashboardData = {
   assets: Array<{ id: string; label: string; data_url: string; updated_at: string }>;
   customRequests: Array<{ id: number; customer_name: string; customer_email: string; customer_phone: string; description: string; karat: string; grams: number; stone: string; complexity: string; spot_price: number; metal_cost: number; metal_allowance: number; craftsmanship: number; estimated_total: number; approved_total?: number; status: string; created_at: string }>;
   checkoutEnabled: boolean;
-  stripeReady: boolean;\n  emailReady: boolean;\n  shippoReady: boolean;\n};
+  stripeReady: boolean;
+  emailReady: boolean;
+  shippoReady: boolean;
+};
 
 export default function AdminPhotos() {
   const [data, setData] = useState<DashboardData | null>(null);
