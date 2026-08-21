@@ -139,7 +139,7 @@ export default function Home() {
           <div className={`navlinks ${menu ? "open" : ""}`}>
             <a href="#drop" onClick={() => setMenu(false)}>FEATURED</a>
             <a href="#pieces" onClick={() => setMenu(false)}>SHOP ALL</a>
-            <a href="#reviews" onClick={() => setMenu(false)}>REVIEWS</a>
+            <a href="/reviews" onClick={() => setMenu(false)}>REVIEWS</a>
             <a href="#custom" onClick={() => setMenu(false)}>CUSTOM</a>
             <a href="#proof" onClick={() => setMenu(false)}>THE STONE</a>
           </div>
@@ -308,46 +308,6 @@ export default function Home() {
         <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} · ${cartTotal.toLocaleString()}</b>{checkoutError && <span>{checkoutError}</span>}</div>
         <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
       </div>}
-
-      <section className="marketplaceReviews" id="reviews">
-        <div className="reviewsHeading">
-          <div>
-            <p className="eyebrow">FACEBOOK MARKETPLACE FEEDBACK</p>
-            <h2>Trusted locally.<br /><em>Rated by real buyers.</em></h2>
-          </div>
-          <div className="ratingSummary" aria-label="4.9 out of 5 stars based on 54 Facebook Marketplace ratings">
-            <strong>4.9</strong>
-            <div><span aria-hidden="true">★★★★★</span><p>54 SELLER RATINGS</p></div>
-          </div>
-        </div>
-        <div className="reviewStrengths" aria-label="Top qualities buyers appreciate">
-          <span>COMMUNICATION · 38</span>
-          <span>PRICING · 37</span>
-          <span>PUNCTUALITY · 31</span>
-          <span>ITEM DESCRIPTION · 30</span>
-        </div>
-        <div className="reviewGrid">
-          <figure>
-            <div className="reviewStars" aria-label="5 out of 5 stars">★★★★★</div>
-            <blockquote>“Best quality out there and prices.”</blockquote>
-            <figcaption><b>Edgar</b><span>Facebook Marketplace reviewer · July 2026</span></figcaption>
-          </figure>
-          <figure>
-            <div className="reviewStars" aria-label="5 out of 5 stars">★★★★★</div>
-            <blockquote>“Purchase was amazing—made everything easy and efficient… will come back for more.”</blockquote>
-            <figcaption><b>Chris</b><span>Facebook Marketplace reviewer · July 2026</span></figcaption>
-          </figure>
-          <figure>
-            <div className="reviewStars" aria-label="5 out of 5 stars">★★★★★</div>
-            <blockquote>“Great quality.”</blockquote>
-            <figcaption><b>Braden</b><span>Facebook Marketplace reviewer · July 2026</span></figcaption>
-          </figure>
-        </div>
-        <div className="reviewFooter">
-          <p>Seller rating and feedback verified on Facebook Marketplace.</p>
-          <a href="https://www.facebook.com/marketplace/profile/100091377385021/" target="_blank" rel="noreferrer">VIEW OUR MARKETPLACE PROFILE ↗</a>
-        </div>
-      </section>
 
       <footer>
         <Logo clipId="footerJewelryLogo" />
