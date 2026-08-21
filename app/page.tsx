@@ -158,13 +158,6 @@ export default function Home() {
         <p>Every piece leaves the bench certified, hand-set, and cut to throw light across a room. This isn’t jewelry that whispers. It announces.</p>
       </section>
 
-      <div className="mexicoMarquee" aria-label="Con fe, con fuego, con orgullo">
-        <div>
-          <span>CON FE.</span><b>◆</b><span>CON FUEGO.</span><b>◆</b><span>CON ORGULLO.</span><b>◆</b>
-          <span>CON FE.</span><b>◆</b><span>CON FUEGO.</span><b>◆</b><span>CON ORGULLO.</span><b>◆</b>
-        </div>
-      </div>
-
       <section className="metalMarket" aria-labelledby="metal-market-heading">
         <div className="metalMarketIntro">
           <p className="eyebrow">CURRENT METALS · USD</p>
