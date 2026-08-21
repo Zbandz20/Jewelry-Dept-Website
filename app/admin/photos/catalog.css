@@ -40,3 +40,15 @@
 .approvalControls button.decline { background:#32151a; color:#ef9ca5; }
 .decisionRecord { color:#777; font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
 @media(max-width:700px) { .approvalControls { grid-template-columns:1fr; } .approvalControls>div { grid-column:auto; } }
+
+
+/* LAUNCH READINESS */
+.launchChecklist { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0; }
+.launchChecklist>div { display:flex; align-items:center; gap:12px; padding:16px; border:1px solid #dfe6ea; border-radius:12px; background:#fff; }
+.launchChecklist>div>span { width:28px; height:28px; display:grid; place-items:center; border-radius:50%; font-weight:800; }
+.launchChecklist .ready>span { background:#e5f7ed; color:#1c8050; }
+.launchChecklist .missing>span { background:#fff1db; color:#a36b14; }
+.launchChecklist p { display:grid; gap:4px; margin:0; }
+.launchChecklist b { font-size:9px; letter-spacing:.12em; }
+.launchChecklist small { color:#6b7980; font-size:9px; line-height:1.4; }
+@media(max-width:850px) { .launchChecklist { grid-template-columns:1fr; } }
