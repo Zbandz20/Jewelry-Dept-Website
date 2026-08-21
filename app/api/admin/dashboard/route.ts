@@ -37,7 +37,10 @@ export async function GET() {
       (SELECT COUNT(*)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '5 minutes') AS live_visitors,
       (SELECT COUNT(DISTINCT session_id)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '24 hours') AS visitors_today,
       (SELECT COALESCE(AVG(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS average_order,
-      (SELECT COUNT(*)::int FROM jd_orders WHERE fulfillment_hold = TRUE AND fraud_review_status = 'pending') AS fraud_reviews
+      (SELECT COUNT(*)::int FROM jd_orders WHERE fulfillment_hold = TRUE AND fraud_review_status = 'pending') AS fraud_reviews,
+      (SELECT COUNT(*)::int FROM jd_events WHERE event_name = 'product_view' AND created_at > NOW() - INTERVAL '24 hours') AS product_views_today,
+      (SELECT COUNT(*)::int FROM jd_events WHERE event_name = 'add_to_cart' AND created_at > NOW() - INTERVAL '24 hours') AS add_to_cart_today,
+      (SELECT COUNT(*)::int FROM jd_events WHERE event_name = 'checkout_start' AND created_at > NOW() - INTERVAL '24 hours') AS checkout_starts_today
   `;
   const products = await sql`SELECT * FROM jd_products ORDER BY id`;
   const orders = await sql`SELECT * FROM jd_orders ORDER BY created_at DESC LIMIT 25`;
