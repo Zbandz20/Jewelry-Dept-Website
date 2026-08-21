@@ -10,17 +10,36 @@ const CRAFT: Record<string, { label: string; perGram: number; minimum: number }>
   pave: { label: "Pavé / stone intensive", perGram: 85, minimum: 400 },
 };
 
-async function goldSpot() {
-  const fallback = Number(process.env.GOLD_PRICE_FALLBACK_USD_OZ || 2400);
+type MetalSymbol = "XAU" | "XAG";
+
+async function metalSpot(symbol: MetalSymbol) {
+  const fallback = symbol === "XAU"
+    ? Number(process.env.GOLD_PRICE_FALLBACK_USD_OZ || 2400)
+    : Number(process.env.SILVER_PRICE_FALLBACK_USD_OZ || 30);
+  const minimum = symbol === "XAU" ? 100 : 1;
   try {
-    const response = await fetch("https://api.gold-api.com/price/XAU", { next: { revalidate: 300 } });
+    const response = await fetch(`https://api.gold-api.com/price/${symbol}`, { next: { revalidate: 300 } });
     if (!response.ok) throw new Error("market unavailable");
     const result = await response.json();
     const price = Number(result.price);
-    if (!Number.isFinite(price) || price < 100) throw new Error("invalid market price");
-    return { price, source: "Gold API", live: true, updatedAt: String(result.updatedAt || new Date().toISOString()) };
+    if (!Number.isFinite(price) || price < minimum) throw new Error("invalid market price");
+    return {
+      symbol,
+      price,
+      pricePerGram: price / TROY_OUNCE_GRAMS,
+      source: "Gold API",
+      live: true,
+      updatedAt: String(result.updatedAt || new Date().toISOString()),
+    };
   } catch {
-    return { price: fallback, source: "Protected fallback", live: false, updatedAt: new Date().toISOString() };
+    return {
+      symbol,
+      price: fallback,
+      pricePerGram: fallback / TROY_OUNCE_GRAMS,
+      source: "Protected fallback",
+      live: false,
+      updatedAt: new Date().toISOString(),
+    };
   }
 }
 
@@ -36,8 +55,14 @@ function calculate(spot: number, karat: string, grams: number, complexity: strin
 }
 
 export async function GET() {
-  const market = await goldSpot();
-  return Response.json({ market, purity: PURITY, craftsmanship: CRAFT, metalAllowancePercent: 15 });
+  const [gold, silver] = await Promise.all([metalSpot("XAU"), metalSpot("XAG")]);
+  return Response.json({
+    market: gold,
+    metals: { gold, silver },
+    purity: PURITY,
+    craftsmanship: CRAFT,
+    metalAllowancePercent: 15,
+  });
 }
 
 export async function POST(request: Request) {
@@ -54,7 +79,7 @@ export async function POST(request: Request) {
   if (!PURITY[karat] || !CRAFT[complexity] || !Number.isFinite(grams) || grams < 1 || grams > 1000) return Response.json({ error: "Choose valid gold, weight, and craftsmanship options." }, { status: 400 });
 
   await ensureAdminTables();
-  const market = await goldSpot();
+  const market = await metalSpot("XAU");
   const quote = calculate(market.price, karat, grams, complexity);
   const [customRequest] = await getSql()`
     INSERT INTO jd_custom_requests
