@@ -745,3 +745,22 @@ footer .footerPolicies { grid-column:2/-1; }
   }
   .metalQuoteFoot b { font-size:7px; }
 }
+
+
+/* GOLD KARAT MARKET VALUES */
+.goldKaratPrices {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.goldKaratPrices b {
+  color:#bcd0d9;
+  font-size:8px;
+  letter-spacing:.07em;
+  white-space:nowrap;
+}
+@media(max-width:600px) {
+  .goldKaratPrices { gap:6px 9px; }
+  .goldKaratPrices b { font-size:7px; }
+}
