@@ -69,7 +69,7 @@ export default function ReviewsPage() {
         <Logo />
         <p>Fire without compromise.<br />Solid gold. Certified stones. Set by hand.</p>
         <div className="footerLinks"><a href="/#pieces">SHOP</a><a href="/#custom">CUSTOM</a><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
-        <div className="footerPolicies"><a href="/policies/shipping">SHIPPING</a><a href="/policies/returns">RETURNS</a><a href="/policies/privacy">PRIVACY</a><a href="/policies/terms">TERMS</a></div>
+        <div className="footerPolicies"><a href="/faq">FAQ</a><a href="/policies/shipping">SHIPPING</a><a href="/policies/returns">RETURNS</a><a href="/policies/privacy">PRIVACY</a><a href="/policies/terms">TERMS</a></div>
         <small>© 2026 JEWELRY DEPT. · ALL RIGHTS RESERVED</small>
       </footer>
     </main>
