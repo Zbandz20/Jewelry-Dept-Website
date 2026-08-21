@@ -46,7 +46,10 @@ export async function GET() {
   const orders = await sql`SELECT * FROM jd_orders ORDER BY created_at DESC LIMIT 25`;
   const assets = await sql`SELECT id, label, data_url, updated_at FROM jd_assets ORDER BY id`;
   const customRequests = await sql`SELECT * FROM jd_custom_requests ORDER BY created_at DESC LIMIT 100`;
-  return Response.json({ summary, products, orders, assets, customRequests, checkoutEnabled: await getCheckoutEnabled(), stripeReady: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET) });
+  const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET);
+  const emailReady = Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM && (process.env.ADMIN_EMAIL || process.env.SHIP_FROM_EMAIL));
+  const shippoReady = Boolean(process.env.SHIPPO_API_TOKEN && process.env.SHIP_FROM_NAME && process.env.SHIP_FROM_STREET1 && process.env.SHIP_FROM_CITY && process.env.SHIP_FROM_STATE && process.env.SHIP_FROM_ZIP);
+  return Response.json({ summary, products, orders, assets, customRequests, checkoutEnabled: await getCheckoutEnabled(), stripeReady, emailReady, shippoReady });
 }
 
 export async function POST(request: Request) {
