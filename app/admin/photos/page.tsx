@@ -6,7 +6,7 @@ import "./security.css";
 import "./catalog.css";
 
 type DashboardData = {
-  summary: { total_orders: number; gross: number; live_visitors: number; visitors_today: number; average_order: number; fraud_reviews: number };
+  summary: { total_orders: number; gross: number; live_visitors: number; visitors_today: number; average_order: number; fraud_reviews: number; product_views_today: number; add_to_cart_today: number; checkout_starts_today: number };
   products: Array<{ id: number; name: string; sku: string; price: number; inventory: number; active: boolean; image_url: string; description: string }>;
   orders: Array<{
     id: number;
@@ -252,6 +252,9 @@ export default function AdminPhotos() {
         {tab === "overview" && <>
           <div className="metricGrid">
             <Metric label="Live visitors" value={String(data.summary.live_visitors)} note={`${data.summary.visitors_today} visitors today`} />
+            <Metric label="Product views" value={String(data.summary.product_views_today)} note="Last 24 hours" />
+            <Metric label="Added to bag" value={String(data.summary.add_to_cart_today)} note="Last 24 hours" />
+            <Metric label="Checkout starts" value={String(data.summary.checkout_starts_today)} note="Last 24 hours" />
             <Metric label="Total orders" value={String(data.summary.total_orders)} note="All-time orders" />
             <Metric label="Gross revenue" value={money(data.summary.gross)} note="Excludes cancelled orders" />
             <Metric label="Average order" value={money(data.summary.average_order)} note="Across all orders" />
