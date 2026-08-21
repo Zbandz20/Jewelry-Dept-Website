@@ -937,3 +937,61 @@ footer .footerPolicies { grid-column:2/-1; }
   .faqList details>p { margin-left:46px; }
   .faqContact { margin:0 18px 60px; align-items:flex-start; flex-direction:column; }
 }
+
+
+/* EXTRA-COMPACT MOBILE METALS */
+@media(max-width:600px) {
+  .metalMarket {
+    gap:12px;
+    padding:16px 12px;
+  }
+  .metalMarketIntro {
+    display:grid;
+    grid-template-columns:1fr auto;
+    align-items:end;
+    gap:4px 12px;
+  }
+  .metalMarketIntro .eyebrow {
+    grid-column:1/-1;
+    margin:0;
+    font-size:7px;
+  }
+  .metalMarketIntro h2 {
+    margin:0;
+    font-size:24px;
+    line-height:.92;
+  }
+  .metalMarketIntro>p:not(.eyebrow) { display:none; }
+  .metalMarketIntro>span {
+    margin:0;
+    padding-bottom:2px;
+    font-size:6px;
+    white-space:nowrap;
+  }
+  .metalQuotes { gap:6px; }
+  .metalQuotes article { padding:10px; }
+  .metalSymbol {
+    width:23px;
+    height:23px;
+    font-size:8px;
+  }
+  .metalQuotes article>div:first-child { gap:6px; }
+  .metalQuotes article>div:first-child p { font-size:7px; }
+  .metalQuotes article>div:first-child small { margin-top:2px; font-size:6px; }
+  .metalQuotes article>strong {
+    margin:10px 0 2px;
+    font-size:clamp(19px,6.3vw,25px);
+  }
+  .metalQuotes article>p { font-size:6px; }
+  .metalQuoteFoot {
+    margin-top:8px;
+    padding-top:7px;
+  }
+  .metalQuoteFoot>span { display:none; }
+  .goldKaratPrices { gap:4px 8px; }
+  .goldKaratPrices b:first-child { display:none; }
+  .goldKaratPrices b,.metalQuoteFoot>b {
+    font-size:6px;
+    letter-spacing:.04em;
+  }
+}
