@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ensureAdminTables, getSql } from "@/lib/admin";
+import ProductPurchase from "./ProductPurchase";
 
 type Product = { id: number; name: string; sku: string; price: number; inventory: number; image_url: string; description: string };
 
@@ -14,17 +15,42 @@ async function productById(id: number): Promise<Product | null> {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const product = await productById(Number((await params).id));
+  const title = product ? `${product.name} — Jewelry Dept.` : "Product — Jewelry Dept.";
+  const description = product?.description || "Jewelry Dept. product details.";
   return {
-    title: product ? `${product.name} — Jewelry Dept.` : "Product — Jewelry Dept.",
-    description: product?.description || "Jewelry Dept. product details.",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: product?.image_url ? [{ url: product.image_url, alt: product.name }] : [],
+    },
   };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const product = await productById(Number((await params).id));
   if (!product) notFound();
+  const productStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    image: product.image_url ? [product.image_url] : [],
+    sku: product.sku || `JD-${product.id}`,
+    brand: { "@type": "Brand", name: "Jewelry Dept." },
+    material: "Solid 925 sterling silver",
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "USD",
+      price: product.price,
+      availability: product.inventory > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      url: `https://jewelrydept.co/products/${product.id}`,
+    },
+  };
   return (
-    <main className="productPage">
+    <main className="productPage">\n      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData) }} />
       <nav className="simpleNav"><a href="/">JEWELRY DEPT.</a><a href="/#pieces">BACK TO SHOP</a></nav>
       <section className="productDetail">
         <div className="productDetailImage"><img src={product.image_url || "/images/cuban.jpg"} alt={product.name} /></div>
@@ -35,7 +61,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <p className="productDescription">{product.description || "Hand-finished by Jewelry Dept."}</p>
           <div className="detailBadges"><span>SOLID 925 STERLING SILVER</span><span>MOISSANITE STONES</span></div>
           <div className={product.inventory > 0 ? "stockStatus available" : "stockStatus"}>{product.inventory > 0 ? `${product.inventory} ready to ship` : "Currently sold out"}</div>
-          <a className="primary productBack" href="/#pieces">{product.inventory > 0 ? "ADD FROM SHOPPING PAGE →" : "VIEW OTHER PIECES →"}</a>
+          <ProductPurchase id={product.id} price={product.price} inventory={product.inventory} />
           <dl className="productFacts">
             <div><dt>Materials</dt><dd>Solid 925 sterling silver and moissanite</dd></div>
             <div><dt>Authenticity</dt><dd>Inspected by Jewelry Dept.</dd></div>
