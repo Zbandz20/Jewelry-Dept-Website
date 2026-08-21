@@ -28,8 +28,7 @@ type DashboardData = {
   assets: Array<{ id: string; label: string; data_url: string; updated_at: string }>;
   customRequests: Array<{ id: number; customer_name: string; customer_email: string; customer_phone: string; description: string; karat: string; grams: number; stone: string; complexity: string; spot_price: number; metal_cost: number; metal_allowance: number; craftsmanship: number; estimated_total: number; approved_total?: number; status: string; created_at: string }>;
   checkoutEnabled: boolean;
-  stripeReady: boolean;
-};
+  stripeReady: boolean;\n  emailReady: boolean;\n  shippoReady: boolean;\n};
 
 export default function AdminPhotos() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -333,6 +332,11 @@ export default function AdminPhotos() {
           <div className="checkoutStatus">
             <div><span className={data.checkoutEnabled ? "statusOn" : "statusOff"}></span><div><b>{data.checkoutEnabled ? "CHECKOUT IS LIVE" : "CHECKOUT IS OFF"}</b><p>{data.checkoutEnabled ? "Customers can complete purchases." : "No customer payments can be accepted yet."}</p></div></div>
             <button onClick={toggleCheckout} disabled={!data.stripeReady || saving === "checkout"}>{saving === "checkout" ? "UPDATING…" : data.checkoutEnabled ? "TURN OFF CHECKOUT" : "ACTIVATE CHECKOUT"}</button>
+          </div>
+          <div className="launchChecklist">
+            <div className={data.stripeReady ? "ready" : "missing"}><span>{data.stripeReady ? "✓" : "!"}</span><p><b>PAYMENTS</b><small>{data.stripeReady ? "Stripe key and webhook connected" : "Stripe key and webhook required"}</small></p></div>
+            <div className={data.shippoReady ? "ready" : "missing"}><span>{data.shippoReady ? "✓" : "!"}</span><p><b>SHIPPING</b><small>{data.shippoReady ? "Shippo and return address connected" : "Shippo or return address incomplete"}</small></p></div>
+            <div className={data.emailReady ? "ready" : "missing"}><span>{data.emailReady ? "✓" : "!"}</span><p><b>EMAIL</b><small>{data.emailReady ? "Customer messages connected" : "Resend email connection required"}</small></p></div>
           </div>
           {!data.stripeReady && <div className="setupNotice"><b>Stripe setup needed</b><p>Connect your Stripe account and webhook before this switch can be activated.</p></div>}
           {error && <small className="panelError">{error}</small>}
