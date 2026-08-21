@@ -39,7 +39,13 @@ export default function Home() {
     let sessionId = sessionStorage.getItem(storageKey);
     if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem(storageKey, sessionId); }
     fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
-    fetch("/api/custom-quote").then(response => response.ok ? response.json() : null).then(setGoldPricing).catch(() => {});
+    const refreshMetals = () => fetch("/api/custom-quote")
+      .then(response => response.ok ? response.json() : null)
+      .then(result => { if (result) setGoldPricing(result); })
+      .catch(() => {});
+    refreshMetals();
+    const metalTimer = window.setInterval(refreshMetals, 300_000);
+    return () => window.clearInterval(metalTimer);
   }, []);
 
   useEffect(() => {
@@ -90,13 +96,26 @@ export default function Home() {
     if (response.ok) setNewsletterEmail("");
   }
 
-  const spot = Number(goldPricing?.market?.price || 0);
+  const goldMarket = goldPricing?.metals?.gold || goldPricing?.market;
+  const silverMarket = goldPricing?.metals?.silver;
+  const spot = Number(goldMarket?.price || 0);
   const purity = Number(goldPricing?.purity?.[customForm.karat] || 0);
   const craft = goldPricing?.craftsmanship?.[customForm.complexity];
   const metalCost = spot ? (spot / 31.1034768) * Number(customForm.grams) * purity : 0;
   const metalAllowance = metalCost * 0.15;
   const craftCost = craft ? Math.max(Number(craft.minimum), Number(customForm.grams) * Number(craft.perGram)) : 0;
   const customEstimate = Math.ceil((metalCost + metalAllowance + craftCost) / 5) * 5;
+  const formatMarketPrice = (value: unknown, digits = 2) => {
+    const price = Number(value);
+    return Number.isFinite(price) && price > 0
+      ? price.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits })
+      : "—";
+  };
+  const marketUpdated = goldMarket?.updatedAt || silverMarket?.updatedAt;
+  const marketUpdatedDate = marketUpdated ? new Date(marketUpdated) : null;
+  const marketUpdatedLabel = marketUpdatedDate && !Number.isNaN(marketUpdatedDate.getTime())
+    ? marketUpdatedDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : "Loading current market";
 
   return (
     <main>
@@ -142,6 +161,29 @@ export default function Home() {
           <span>CON FE.</span><b>◆</b><span>CON FUEGO.</span><b>◆</b><span>CON ORGULLO.</span><b>◆</b>
         </div>
       </div>
+
+      <section className="metalMarket" aria-labelledby="metal-market-heading">
+        <div className="metalMarketIntro">
+          <p className="eyebrow">CURRENT METALS · USD</p>
+          <h2 id="metal-market-heading">Gold &amp; silver<br /><em>market reference.</em></h2>
+          <p>Spot prices update automatically about every five minutes. Finished jewelry pricing also includes purity, weight, sourcing, casting, stone setting, craftsmanship, taxes, and shipping.</p>
+          <span>UPDATED {marketUpdatedLabel.toUpperCase()}</span>
+        </div>
+        <div className="metalQuotes" aria-live="polite">
+          <article className="goldQuote">
+            <div><span className="metalSymbol">AU</span><p>GOLD <small>XAU</small></p></div>
+            <strong>{formatMarketPrice(goldMarket?.price)}</strong>
+            <p>PER TROY OUNCE</p>
+            <div className="metalQuoteFoot"><b>{formatMarketPrice(goldMarket?.pricePerGram)} / GRAM</b><span className={goldMarket?.live ? "marketLive" : "marketReference"}>{goldMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
+          </article>
+          <article className="silverQuote">
+            <div><span className="metalSymbol">AG</span><p>SILVER <small>XAG</small></p></div>
+            <strong>{formatMarketPrice(silverMarket?.price)}</strong>
+            <p>PER TROY OUNCE</p>
+            <div className="metalQuoteFoot"><b>{formatMarketPrice(silverMarket?.pricePerGram)} / GRAM</b><span className={silverMarket?.live ? "marketLive" : "marketReference"}>{silverMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
+          </article>
+        </div>
+      </section>
 
       <section className="featured" id="drop">
         <div className="productVisual">
