@@ -1,17 +1,30 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { cache } from "react";
 import { ensureAdminTables, getSql } from "@/lib/admin";
 import ProductPurchase from "./ProductPurchase";
 
 type Product = { id: number; name: string; sku: string; price: number; inventory: number; image_url: string; description: string };
 
-async function productById(id: number): Promise<Product | null> {
+export const revalidate = 30;
+
+const productById = cache(async (id: number): Promise<Product | null> => {
   if (!Number.isInteger(id) || id < 1) return null;
   await ensureAdminTables();
-  const rows = await getSql()`SELECT id, name, sku, price, inventory, image_url, description FROM jd_products WHERE id = ${id} AND active = TRUE LIMIT 1`;
+  const rows = await getSql()`SELECT id, name, sku, price, inventory, image_url, description, updated_at FROM jd_products WHERE id = ${id} AND active = TRUE LIMIT 1`;
   if (!rows[0]) return null;
-  return { ...rows[0], id: Number(rows[0].id), price: Number(rows[0].price), inventory: Number(rows[0].inventory) } as Product;
-}
+  const imageUrl = String(rows[0].image_url || "");
+  return {
+    ...rows[0],
+    id: Number(rows[0].id),
+    price: Number(rows[0].price),
+    inventory: Number(rows[0].inventory),
+    image_url: imageUrl.startsWith("data:image/")
+      ? `/api/product-image/${rows[0].id}?v=${new Date(rows[0].updated_at).getTime()}`
+      : imageUrl,
+  } as Product;
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const product = await productById(Number((await params).id));
@@ -20,11 +33,19 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title,
     description,
+    alternates: { canonical: product ? `/products/${product.id}` : undefined },
     openGraph: {
       title,
       description,
       type: "website",
+      url: product ? `/products/${product.id}` : undefined,
       images: product?.image_url ? [{ url: product.image_url, alt: product.name }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: product?.image_url ? [product.image_url] : [],
     },
   };
 }
@@ -50,8 +71,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     },
   };
   return (
-    <main className="productPage">\n      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData) }} />
-      <nav className="simpleNav"><a href="/">JEWELRY DEPT.</a><a href="/#pieces">BACK TO SHOP</a></nav>
+    <main className="productPage">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData) }} />
+      <nav className="simpleNav"><Link href="/">JEWELRY DEPT.</Link><Link href="/#pieces">BACK TO SHOP</Link></nav>
       <section className="productDetail">
         <div className="productDetailImage"><img src={product.image_url || "/images/cuban.jpg"} alt={product.name} /></div>
         <div className="productDetailInfo">

@@ -1,5 +1,6 @@
 import { ensureAdminTables, getSql } from "@/lib/admin";
 import { escapeHtml, ownerEmail, sendTransactionalEmail } from "@/lib/email";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -57,16 +58,21 @@ function calculate(spot: number, karat: string, grams: number, complexity: strin
 
 export async function GET() {
   const [gold, silver] = await Promise.all([metalSpot("XAU"), metalSpot("XAG")]);
-  return Response.json({
-    market: gold,
-    metals: { gold, silver },
-    purity: PURITY,
-    craftsmanship: CRAFT,
-    metalAllowancePercent: 15,
-  });
+  return Response.json(
+    {
+      market: gold,
+      metals: { gold, silver },
+      purity: PURITY,
+      craftsmanship: CRAFT,
+      metalAllowancePercent: 15,
+    },
+    { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+  );
 }
 
 export async function POST(request: Request) {
+  const limit = await checkRateLimit(request, "custom-quote", 6, 60 * 60);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
   const body = await request.json();
   const name = String(body.name || "").trim().slice(0, 120);
   const email = String(body.email || "").trim().toLowerCase().slice(0, 180);

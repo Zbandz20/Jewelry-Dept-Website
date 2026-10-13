@@ -7,9 +7,23 @@ export function getSql() {
   return neon(process.env.DATABASE_URL);
 }
 
+let adminAuthTablePromise: Promise<void> | null = null;
+
 async function ensureAdminAuthTable() {
-  const sql = getSql();
-  await sql`CREATE TABLE IF NOT EXISTS jd_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  if (!adminAuthTablePromise) {
+    const sql = getSql();
+    adminAuthTablePromise = sql`
+      CREATE TABLE IF NOT EXISTS jd_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `.then(() => undefined).catch((error) => {
+      adminAuthTablePromise = null;
+      throw error;
+    });
+  }
+  return adminAuthTablePromise;
 }
 
 async function savedPasswordHash() {
@@ -95,8 +109,15 @@ export async function isAdmin() {
   return timingSafeEqual(Buffer.from(cookie), Buffer.from(expected));
 }
 
-export async function ensureAdminTables() {
+let adminTablesPromise: Promise<void> | null = null;
+
+async function initializeAdminTables() {
   const sql = getSql();
+  await ensureAdminAuthTable();
+  const schemaVersion = "2026-09-30-1";
+  const currentVersion = await sql`SELECT value FROM jd_settings WHERE key = 'schema_version' LIMIT 1`;
+  if (currentVersion[0]?.value === schemaVersion) return;
+
   await sql`
     CREATE TABLE IF NOT EXISTS jd_products (
       id SERIAL PRIMARY KEY,
@@ -137,6 +158,19 @@ export async function ensureAdminTables() {
   await sql`CREATE INDEX IF NOT EXISTS jd_orders_stripe_charge_idx ON jd_orders(stripe_charge_id) WHERE stripe_charge_id <> ''`;
   await sql`CREATE INDEX IF NOT EXISTS jd_orders_fraud_review_idx ON jd_orders(fulfillment_hold, fraud_review_status)`;
   await sql`
+    CREATE TABLE IF NOT EXISTS jd_checkout_reservations (
+      id BIGSERIAL PRIMARY KEY,
+      reservation_key TEXT NOT NULL UNIQUE,
+      stripe_session_id TEXT UNIQUE,
+      cart JSONB NOT NULL,
+      status TEXT NOT NULL DEFAULT 'creating',
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS jd_checkout_reservations_status_expiry_idx ON jd_checkout_reservations(status, expires_at)`;
+  await sql`
     CREATE TABLE IF NOT EXISTS jd_assets (
       id TEXT PRIMARY KEY,
       label TEXT NOT NULL,
@@ -165,6 +199,38 @@ export async function ensureAdminTables() {
   `;
   await sql`CREATE INDEX IF NOT EXISTS jd_events_created_idx ON jd_events(created_at)`;
   await sql`CREATE INDEX IF NOT EXISTS jd_events_name_created_idx ON jd_events(event_name, created_at)`;
+  await sql`
+    CREATE TABLE IF NOT EXISTS jd_subscribers (
+      id BIGSERIAL PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS jd_recovery_attempts (
+      id BIGSERIAL PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS jd_recovery_attempts_client_created_idx ON jd_recovery_attempts(client_id, created_at)`;
+  await sql`
+    CREATE TABLE IF NOT EXISTS jd_password_resets (
+      id BIGSERIAL PRIMARY KEY,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS jd_rate_limits (
+      key TEXT PRIMARY KEY,
+      window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      hits INTEGER NOT NULL DEFAULT 1
+    )
+  `;
   await sql`
     CREATE TABLE IF NOT EXISTS jd_custom_requests (
       id SERIAL PRIMARY KEY,
@@ -243,4 +309,20 @@ export async function ensureAdminTables() {
     ('featured', 'Featured Cuban chain', '')
     ON CONFLICT (id) DO NOTHING
   `;
+  await sql`
+    INSERT INTO jd_settings (key, value, updated_at)
+    VALUES ('schema_version', ${schemaVersion}, NOW())
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+  `;
+}
+
+export async function ensureAdminTables() {
+  if (!adminTablesPromise) {
+    adminTablesPromise = initializeAdminTables().catch((error) => {
+      adminTablesPromise = null;
+      throw error;
+    });
+  }
+
+  return adminTablesPromise;
 }

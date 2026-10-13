@@ -34,7 +34,7 @@ export async function GET() {
     SELECT
       (SELECT COUNT(*)::int FROM jd_orders) AS total_orders,
       (SELECT COALESCE(SUM(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS gross,
-      (SELECT COUNT(*)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '5 minutes') AS live_visitors,
+      (SELECT COUNT(DISTINCT session_id)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '5 minutes') AS live_visitors,
       (SELECT COUNT(DISTINCT session_id)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '24 hours') AS visitors_today,
       (SELECT COALESCE(AVG(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS average_order,
       (SELECT COUNT(*)::int FROM jd_orders WHERE fulfillment_hold = TRUE AND fraud_review_status = 'pending') AS fraud_reviews,

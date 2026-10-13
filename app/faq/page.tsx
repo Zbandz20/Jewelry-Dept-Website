@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions — Jewelry Dept.",
   description: "Answers about Jewelry Dept. materials, moissanite, sizing, shipping, returns, custom jewelry, and care.",
+  alternates: { canonical: "/faq" },
+  openGraph: { url: "/faq" },
 };
 
 const questions = [
@@ -45,7 +48,7 @@ const questions = [
 ];
 
 function Logo() {
-  return <a className="wordmark" href="/" aria-label="Jewelry Dept. home"><img src="/images/jewelry-dept-shopify-logo-transparent.png" alt="Jewelry Dept." /></a>;
+  return <Link className="wordmark" href="/" aria-label="Jewelry Dept. home"><img src="/images/jewelry-dept-shopify-logo-transparent.png" alt="Jewelry Dept." /></Link>;
 }
 
 export default function FaqPage() {
@@ -63,7 +66,7 @@ export default function FaqPage() {
     <main className="faqPage">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <nav className="simpleNav" aria-label="FAQ navigation">
-        <a href="/">← HOME</a><Logo /><a href="/#pieces">SHOP ALL</a>
+        <Link href="/">← HOME</Link><Logo /><Link href="/#pieces">SHOP ALL</Link>
       </nav>
       <header className="faqHero">
         <p className="eyebrow">CLIENT SUPPORT</p>
@@ -85,8 +88,8 @@ export default function FaqPage() {
       <footer>
         <Logo />
         <p>Fire without compromise.<br />Solid silver and gold. Certified stones. Set by hand.</p>
-        <div className="footerLinks"><a href="/#pieces">SHOP</a><a href="/#custom">CUSTOM</a><a href="/reviews">REVIEWS</a></div>
-        <div className="footerPolicies"><a href="/faq">FAQ</a><a href="/policies/shipping">SHIPPING</a><a href="/policies/returns">RETURNS</a><a href="/policies/privacy">PRIVACY</a><a href="/policies/terms">TERMS</a></div>
+        <div className="footerLinks"><Link href="/#pieces">SHOP</Link><Link href="/#custom">CUSTOM</Link><Link href="/reviews">REVIEWS</Link></div>
+        <div className="footerPolicies"><Link href="/faq">FAQ</Link><Link href="/policies/shipping">SHIPPING</Link><Link href="/policies/returns">RETURNS</Link><Link href="/policies/privacy">PRIVACY</Link><Link href="/policies/terms">TERMS</Link></div>
         <small>© 2026 JEWELRY DEPT. · ALL RIGHTS RESERVED</small>
       </footer>
     </main>

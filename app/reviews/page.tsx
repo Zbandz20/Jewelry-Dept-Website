@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Customer Reviews — Jewelry Dept.",
   description: "Verified Facebook Marketplace feedback and customer ratings for Jewelry Dept.",
+  alternates: { canonical: "/reviews" },
+  openGraph: { url: "/reviews" },
 };
 
 function Logo() {
   return (
-    <a className="wordmark" href="/" aria-label="Jewelry Dept. home">
+    <Link className="wordmark" href="/" aria-label="Jewelry Dept. home">
       <img src="/images/jewelry-dept-shopify-logo-transparent.png" alt="Jewelry Dept." />
-    </a>
+    </Link>
   );
 }
 
@@ -17,9 +20,9 @@ export default function ReviewsPage() {
   return (
     <main>
       <nav className="simpleNav" aria-label="Reviews navigation">
-        <a href="/">← HOME</a>
+        <Link href="/">← HOME</Link>
         <Logo />
-        <a href="/#pieces">SHOP ALL</a>
+        <Link href="/#pieces">SHOP ALL</Link>
       </nav>
 
       <section className="marketplaceReviews" id="reviews">
@@ -68,8 +71,8 @@ export default function ReviewsPage() {
       <footer>
         <Logo />
         <p>Fire without compromise.<br />Solid gold. Certified stones. Set by hand.</p>
-        <div className="footerLinks"><a href="/#pieces">SHOP</a><a href="/#custom">CUSTOM</a><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
-        <div className="footerPolicies"><a href="/faq">FAQ</a><a href="/policies/shipping">SHIPPING</a><a href="/policies/returns">RETURNS</a><a href="/policies/privacy">PRIVACY</a><a href="/policies/terms">TERMS</a></div>
+        <div className="footerLinks"><Link href="/#pieces">SHOP</Link><Link href="/#custom">CUSTOM</Link><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
+        <div className="footerPolicies"><Link href="/faq">FAQ</Link><Link href="/policies/shipping">SHIPPING</Link><Link href="/policies/returns">RETURNS</Link><Link href="/policies/privacy">PRIVACY</Link><Link href="/policies/terms">TERMS</Link></div>
         <small>© 2026 JEWELRY DEPT. · ALL RIGHTS RESERVED</small>
       </footer>
     </main>

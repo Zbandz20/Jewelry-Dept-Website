@@ -1,7 +1,10 @@
 import { ensureAdminTables, getSql } from "@/lib/admin";
 import { escapeHtml, ownerEmail, sendTransactionalEmail } from "@/lib/email";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limit = await checkRateLimit(request, "newsletter", 6, 60 * 60);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
   await ensureAdminTables();
   const email = String((await request.json()).email || "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
@@ -9,12 +12,6 @@ export async function POST(request: Request) {
   }
 
   const sql = getSql();
-  await sql`CREATE TABLE IF NOT EXISTS jd_subscribers (
-    id BIGSERIAL PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`;
   const inserted = await sql`
     INSERT INTO jd_subscribers (email, active)
     VALUES (${email}, TRUE)

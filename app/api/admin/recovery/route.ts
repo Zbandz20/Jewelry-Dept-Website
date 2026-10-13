@@ -12,14 +12,6 @@ export async function GET() {
 export async function POST(request: Request) {
   await ensureAdminTables();
   const sql = getSql();
-  await sql`CREATE TABLE IF NOT EXISTS jd_recovery_attempts (id BIGSERIAL PRIMARY KEY, client_id TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
-  await sql`CREATE TABLE IF NOT EXISTS jd_password_resets (
-    id BIGSERIAL PRIMARY KEY,
-    token_hash TEXT NOT NULL UNIQUE,
-    expires_at TIMESTAMPTZ NOT NULL,
-    used_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`;
 
   const clientId = (request.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim().slice(0, 80);
   const body = await request.json();

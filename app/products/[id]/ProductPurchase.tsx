@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 function storefrontSession() {
   const key = "jd-session";
@@ -42,7 +43,7 @@ export default function ProductPurchase({ id, price, inventory }: { id: number; 
       setMessage(result.error || "Secure checkout could not open.");
       return;
     }
-    window.location.href = result.url;
+    window.location.assign(result.url);
   }
 
   return (
@@ -50,7 +51,7 @@ export default function ProductPurchase({ id, price, inventory }: { id: number; 
       <button className="primary productBuyNow" disabled={inventory < 1 || busy} onClick={buyNow}>
         {inventory < 1 ? "SOLD OUT" : busy ? "OPENING SECURE CHECKOUT…" : "BUY THIS PIECE →"}
       </button>
-      <a className="productContinue" href="/#pieces">CONTINUE SHOPPING</a>
+      <Link className="productContinue" href="/#pieces">CONTINUE SHOPPING</Link>
       {message && <p role="status">{message}</p>}
     </div>
   );

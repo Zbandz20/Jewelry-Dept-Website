@@ -55,7 +55,14 @@ export default function AdminPhotos() {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
     if (response.ok) setData(await response.json());
   }
-  useEffect(() => { load(); const timer = setInterval(load, 30000); return () => clearInterval(timer); }, []);
+  useEffect(() => {
+    const initialTimer = window.setTimeout(() => void load(), 0);
+    const refreshTimer = window.setInterval(() => void load(), 30000);
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
   useEffect(() => {
     if (tab !== "security" || !data) return;
     fetch("/api/admin/security", { cache: "no-store" }).then(response => response.ok ? response.json() : null).then(result => {
@@ -132,20 +139,6 @@ export default function AdminPhotos() {
     if (!response.ok) return setError(result.error || "Password recovery is not available.");
     setSecurityMessage(result.message || "A secure reset link has been sent.");
     setRecoveryMode(true);
-  }
-
-  async function recoverPassword(event: React.FormEvent) {
-    event.preventDefault();
-    setError("");
-    if (newPassword !== confirmPassword) return setError("New passwords do not match.");
-    const response = await fetch("/api/admin/recovery", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answer: securityAnswer, newPassword }),
-    });
-    const result = await response.json();
-    if (!response.ok) return setError(result.error || "Password could not be reset.");
-    setSecurityAnswer(""); setNewPassword(""); setConfirmPassword("");
-    await load();
   }
 
   async function saveRecoveryQuestion(event: React.FormEvent) {

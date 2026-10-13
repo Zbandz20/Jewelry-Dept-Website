@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { ensureAdminTables, getSql } from "@/lib/admin";
 import { escapeHtml, ownerEmail, sendTransactionalEmail } from "@/lib/email";
 import { assessOrderFraud } from "@/lib/fraud";
+import { markCheckoutReservation, releaseCheckoutReservation } from "@/lib/inventory";
 
 function validSignature(payload: string, header: string, secret: string) {
   const parts = Object.fromEntries(header.split(",").map(part => part.split("=")));
@@ -61,15 +62,36 @@ export async function POST(request: Request) {
     return Response.json({ received: true });
   }
 
+  if (["checkout.session.expired", "checkout.session.async_payment_failed"].includes(event.type)) {
+    await ensureAdminTables();
+    const reservationKey = String(event.data?.object?.metadata?.reservation_key || "");
+    if (reservationKey) {
+      await releaseCheckoutReservation(
+        reservationKey,
+        event.type === "checkout.session.expired" ? "expired" : "payment_failed",
+      );
+    }
+    return Response.json({ received: true });
+  }
+
   if (!["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(event.type)) {
     return Response.json({ received: true });
   }
   const session = event.data.object;
-  if (!["paid", "no_payment_required"].includes(session.payment_status)) return Response.json({ received: true });
+  if (!["paid", "no_payment_required"].includes(session.payment_status)) {
+    const reservationKey = String(session.metadata?.reservation_key || "");
+    if (reservationKey) {
+      await ensureAdminTables();
+      await markCheckoutReservation(reservationKey, "pending_payment");
+    }
+    return Response.json({ received: true });
+  }
 
   await ensureAdminTables();
   const sql = getSql();
   const cart = JSON.parse(session.metadata?.cart || "[]") as Array<{ id: number; quantity: number }>;
+  const reservationKey = String(session.metadata?.reservation_key || "");
+  const usedReservation = reservationKey ? await markCheckoutReservation(reservationKey, "paid") : false;
   const customer = session.customer_details || {};
   const shipping = session.collected_information?.shipping_details || session.shipping_details || {};
   const fraud = await assessOrderFraud(session, shipping);
@@ -90,8 +112,10 @@ export async function POST(request: Request) {
     RETURNING id
   `;
   if (inserted.length) {
-    for (const item of cart) {
-      await sql`UPDATE jd_products SET inventory = GREATEST(0, inventory - ${Number(item.quantity)}), updated_at = NOW() WHERE id = ${Number(item.id)}`;
+    if (!usedReservation) {
+      for (const item of cart) {
+        await sql`UPDATE jd_products SET inventory = GREATEST(0, inventory - ${Number(item.quantity)}), updated_at = NOW() WHERE id = ${Number(item.id)}`;
+      }
     }
 
     const orderId = Number(inserted[0].id);

@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 type Product = { id: number; name: string; description: string; price: number; inventory: number; image_url: string };
+type MetalQuote = { price?: number; pricePerGram?: number; live?: boolean; updatedAt?: string };
+type GoldPricing = {
+  market?: MetalQuote;
+  metals?: { gold?: MetalQuote; silver?: MetalQuote };
+  purity?: Record<string, number>;
+  craftsmanship?: Record<string, { label?: string; perGram: number; minimum: number }>;
+};
 const shopCategories = ["ALL", "CHAINS", "BRACELETS", "EARRINGS", "RINGS", "PENDANTS", "SETS & WATCHES"] as const;
 function productCategory(name: string) {
   const value = name.toLowerCase();
@@ -36,7 +44,7 @@ export default function Home() {
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
-  const [goldPricing, setGoldPricing] = useState<any>(null);
+  const [goldPricing, setGoldPricing] = useState<GoldPricing | null>(null);
   const [customForm, setCustomForm] = useState({ name: "", email: "", phone: "", description: "", karat: "14K", grams: 10, stone: "Moissanite", complexity: "detailed" });
   const [customBusy, setCustomBusy] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
@@ -102,7 +110,7 @@ export default function Home() {
     const result = await response.json();
     setCheckoutBusy(false);
     if (!response.ok) return setCheckoutError(result.error || "Checkout could not start.");
-    window.location.href = result.url;
+    window.location.assign(result.url);
   }
 
   async function submitCustomRequest(event: React.FormEvent) {
@@ -176,12 +184,13 @@ export default function Home() {
           <div className={`navlinks ${menu ? "open" : ""}`}>
             <a href="#drop" onClick={() => setMenu(false)}>FEATURED</a>
             <a href="#pieces" onClick={() => setMenu(false)}>SHOP ALL</a>
-            <a href="/reviews" onClick={() => setMenu(false)}>REVIEWS</a>\n            <a href="/faq" onClick={() => setMenu(false)}>FAQ</a>
+            <a href="/reviews" onClick={() => setMenu(false)}>REVIEWS</a>
+            <a href="/faq" onClick={() => setMenu(false)}>FAQ</a>
             <a href="#custom" onClick={() => setMenu(false)}>CUSTOM</a>
             <a href="#proof" onClick={() => setMenu(false)}>THE STONE</a>
           </div>
         </div>
-        <Logo clipId="navJewelryLogo" />
+        <Logo />
         <button className="cart" onClick={() => setCartOpen(true)} aria-label={`Open bag with ${cart} items`}>BAG <span>{cart}</span></button>
       </nav>
 
@@ -248,11 +257,11 @@ export default function Home() {
         <div className="productGrid">
           {visibleProducts.map((product, index) => (
             <article className="card" key={product.name}>
-              <a className={`cardImage crop${index + 1}`} href={`/products/${product.id}`} aria-label={`View details for ${product.name}`}>
+              <Link className={`cardImage crop${index + 1}`} href={`/products/${product.id}`} aria-label={`View details for ${product.name}`}>
                 <img src={product.image_url || siteImages.featured} alt={product.name} />
                 <span>{product.inventory > 0 ? `${product.inventory} AVAILABLE` : "SOLD OUT"}</span>
-              </a>
-              <div className="cardTop"><h3><a href={`/products/${product.id}`}>{product.name}</a></h3><strong>${product.price.toLocaleString()}</strong></div>
+              </Link>
+              <div className="cardTop"><h3><Link href={`/products/${product.id}`}>{product.name}</Link></h3><strong>${product.price.toLocaleString()}</strong></div>
               <p>{product.description || "Hand-finished by Jewelry Dept."}</p>
               <button disabled={product.inventory < 1} onClick={() => addToBag(product)}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "+"}</span></button>
             </article>
@@ -351,25 +360,17 @@ export default function Home() {
       </div>}
 
       <footer>
-        <Logo clipId="footerJewelryLogo" />
+        <Logo />
         <p>Fire without compromise.<br />Solid gold. Certified stones. Set by hand.</p>
         <div className="footerLinks"><a href="#pieces">SHOP</a><a href="#custom">CUSTOM</a><a href="mailto:hello@jewelrydept.co">CONTACT</a></div>
-        <div className="footerPolicies"><a href="/faq">FAQ</a><a href="/policies/shipping">SHIPPING</a><a href="/policies/returns">RETURNS</a><a href="/policies/privacy">PRIVACY</a><a href="/policies/terms">TERMS</a></div>
+        <div className="footerPolicies"><Link href="/faq">FAQ</Link><Link href="/policies/shipping">SHIPPING</Link><Link href="/policies/returns">RETURNS</Link><Link href="/policies/privacy">PRIVACY</Link><Link href="/policies/terms">TERMS</Link></div>
         <small>© 2026 JEWELRY DEPT. · ALL RIGHTS RESERVED</small>
       </footer>
     </main>
   );
 }
 
-function Option({ label, items, value, setValue }: { label: string; items: string[]; value: string; setValue: (value: string) => void }) {
-  return <div className="option"><span>{label}</span><div>{items.map(item => <button className={value === item ? "active" : ""} onClick={() => setValue(item)} key={item}>{item}</button>)}</div></div>;
-}
-
-function Compare({ label, a, b }: { label: string; a: string; b: string }) {
-  return <div className="compareRow"><span>{label}</span><strong>{a}</strong><span>{b}</span></div>;
-}
-
-function Logo({ clipId: _clipId }: { clipId: string }) {
+function Logo() {
   return (
     <a className="wordmark" href="#" aria-label="Jewelry Dept. home">
       <img src="/images/jewelry-dept-shopify-logo-transparent.png" alt="Jewelry Dept." />

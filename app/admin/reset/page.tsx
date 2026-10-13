@@ -10,7 +10,12 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => setToken(new URLSearchParams(window.location.search).get("token") || ""), []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setToken(new URLSearchParams(window.location.search).get("token") || "");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();

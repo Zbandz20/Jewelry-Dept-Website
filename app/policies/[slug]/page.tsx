@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 const policies = {
   shipping: {
@@ -53,7 +54,11 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const policy = policies[slug as keyof typeof policies];
-  return { title: policy ? `${policy.title} — Jewelry Dept.` : "Policy — Jewelry Dept." };
+  return {
+    title: policy ? `${policy.title} — Jewelry Dept.` : "Policy — Jewelry Dept.",
+    alternates: { canonical: policy ? `/policies/${slug}` : undefined },
+    openGraph: { url: policy ? `/policies/${slug}` : undefined },
+  };
 }
 
 export default async function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -62,7 +67,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ slug: s
   if (!policy) notFound();
   return (
     <main className="policyPage">
-      <nav className="simpleNav"><a href="/">JEWELRY DEPT.</a><a href="/#pieces">SHOP</a></nav>
+      <nav className="simpleNav"><Link href="/">JEWELRY DEPT.</Link><Link href="/#pieces">SHOP</Link></nav>
       <article>
         <p className="eyebrow">CUSTOMER CARE</p>
         <h1>{policy.title}</h1>
