@@ -231,9 +231,16 @@ export async function assessOrderFraud(session: FraudSession, shipping: Shipping
   const cvcFailed = checks.cvc_check === "fail";
   const postalFailed = checks.address_postal_code_check === "fail";
   const line1Failed = checks.address_line1_check === "fail";
+  const issuerChecksIncomplete = checks.cvc_check !== "pass"
+    || checks.address_postal_code_check !== "pass"
+    || checks.address_line1_check !== "pass";
   if (cvcFailed) { score += 25; signals.push("Card security code verification failed."); }
   if (postalFailed) { score += 20; signals.push("Issuer billing postal-code verification failed."); }
   if (line1Failed) { score += 15; signals.push("Issuer billing street-address verification failed."); }
+  if (!cvcFailed && checks.cvc_check !== "pass") signals.push("Card security code verification was unavailable or incomplete.");
+  if (!postalFailed && checks.address_postal_code_check !== "pass") signals.push("Issuer billing postal-code verification was unavailable or incomplete.");
+  if (!line1Failed && checks.address_line1_check !== "pass") signals.push("Issuer billing street-address verification was unavailable or incomplete.");
+  if (issuerChecksIncomplete && !cvcFailed && !postalFailed && !line1Failed) score += 10;
 
   const mismatchWeights: Record<AddressField, number> = {
     street: 15, unit: 10, city: 5, state: 10, "postal code": 20, country: 25,
@@ -246,7 +253,7 @@ export async function assessOrderFraud(session: FraudSession, shipping: Shipping
   if (threeDsResult === "authenticated") signals.push("3-D Secure identity verification succeeded.");
   else if (threeDsFailed) { score += 25; signals.push("3-D Secure identity verification failed."); }
   else if (threeDsResult) signals.push(`3-D Secure result: ${threeDsResult.replaceAll("_", " ")}.`);
-  else if (amountCents >= 50_000) signals.push("3-D Secure authentication result was unavailable for this high-value order.");
+  else signals.push("3-D Secure identity verification was unavailable or incomplete.");
 
   if (amountCents >= 250_000) { score += 10; signals.push("Order total is $2,500 or more."); }
   else if (amountCents >= 100_000) { score += 5; signals.push("Order total is $1,000 or more."); }
@@ -256,15 +263,15 @@ export async function assessOrderFraud(session: FraudSession, shipping: Shipping
   score = Math.max(0, Math.min(100, score));
 
   const addressNeedsReview = addressComparison.status !== "match";
-  const highValueWithout3ds = amountCents >= 50_000 && threeDsResult !== "authenticated";
+  const threeDsNeedsReview = threeDsResult !== "authenticated";
   let riskLevel: FraudAssessment["riskLevel"] = "normal";
   if (stripeLevel === "highest" || score >= 75 || cvcFailed || threeDsFailed) riskLevel = "highest";
-  else if (stripeLevel === "elevated" || score >= 65 || postalFailed || line1Failed || addressNeedsReview || radarReview || highValueWithout3ds) riskLevel = "elevated";
+  else if (stripeLevel === "elevated" || score >= 65 || postalFailed || line1Failed || issuerChecksIncomplete || addressNeedsReview || radarReview || threeDsNeedsReview) riskLevel = "elevated";
   else if (!["normal", "elevated", "highest"].includes(stripeLevel)) riskLevel = "not_assessed";
 
-  const notAssessedHighValue = riskLevel === "not_assessed" && amountCents >= 50_000;
-  if (notAssessedHighValue) signals.push("High-value payment was not assessed by Stripe Radar.");
-  const fulfillmentHold = riskLevel === "elevated" || riskLevel === "highest" || notAssessedHighValue;
+  const notAssessed = riskLevel === "not_assessed";
+  if (notAssessed) signals.push("Payment was not assessed by Stripe Radar.");
+  const fulfillmentHold = riskLevel === "elevated" || riskLevel === "highest" || notAssessed;
 
   if (!signals.length) signals.push("No elevated fraud signals were returned.");
 
