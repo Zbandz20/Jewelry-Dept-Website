@@ -18,6 +18,7 @@ type DashboardData = {
     shipping_address?: { name?: string; address?: Record<string,string> };
     billing_address?: { name?: string; address?: Record<string,string> };
     address_match_status?: "match" | "mismatch" | "incomplete" | "not_checked";
+    test_order?: boolean;
     label_url?: string;
     tracking_number?: string;
     tracking_url?: string;
@@ -31,6 +32,7 @@ type DashboardData = {
   customRequests: Array<{ id: number; customer_name: string; customer_email: string; customer_phone: string; description: string; karat: string; grams: number; stone: string; complexity: string; spot_price: number; metal_cost: number; metal_allowance: number; craftsmanship: number; estimated_total: number; approved_total?: number; status: string; created_at: string }>;
   checkoutEnabled: boolean;
   stripeReady: boolean;
+  stripeTestReady: boolean;
   emailReady: boolean;
   shippoReady: boolean;
 };
@@ -68,6 +70,12 @@ export default function AdminPhotos() {
       window.clearTimeout(initialTimer);
       window.clearInterval(refreshTimer);
     };
+  }, []);
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get("security_test");
+    if (result !== "complete") return;
+    const timer = window.setTimeout(() => setTab("orders"), 0);
+    return () => window.clearTimeout(timer);
   }, []);
   useEffect(() => {
     if (tab !== "security" || !data) return;
@@ -187,6 +195,15 @@ export default function AdminPhotos() {
     setSaving("");
     if (!response.ok) return setError(result.error || "Checkout could not be updated.");
     setError(""); await load();
+  }
+
+  async function startSecurityTest() {
+    setSaving("security-test"); setError("");
+    const response = await fetch("/api/admin/test-checkout", { method: "POST" });
+    const result = await response.json();
+    setSaving("");
+    if (!response.ok) return setError(result.error || "The Stripe security test could not start.");
+    window.location.assign(result.url);
   }
 
   async function createLabel(orderId: number) {
@@ -316,13 +333,13 @@ export default function AdminPhotos() {
             const riskLevel = order.fraud_risk_level || "not_assessed";
             const riskSignals = Array.isArray(order.fraud_signals) ? order.fraud_signals : [];
             const pendingReview = Boolean(order.fulfillment_hold && order.fraud_review_status === "pending");
-            const blocked = order.fraud_review_status === "rejected" || order.fraud_review_status === "disputed";
+            const blocked = Boolean(order.test_order || order.fraud_review_status === "rejected" || order.fraud_review_status === "disputed");
             const billingAddress = formatAddress(order.billing_address);
             const shippingAddress = formatAddress(order.shipping_address);
             const addressStatus = order.address_match_status || "not_checked";
             return <article className={`orderReviewCard ${order.fulfillment_hold ? "held" : ""}`} key={order.id}>
               <div className="orderReviewHead">
-                <div><span>ORDER #{order.id}</span><h3>{order.customer_name}</h3><p>{order.customer_email}</p></div>
+                <div><span>{order.test_order ? `TEST ORDER #${order.id}` : `ORDER #${order.id}`}</span><h3>{order.customer_name}</h3><p>{order.customer_email}</p></div>
                 <div className="orderValue"><strong>{money(order.total)}</strong><b className={`riskBadge risk-${riskLevel.replace("_", "-")}`}>{riskLevel.replace("_", " ")} risk{order.fraud_risk_score == null ? "" : ` · ${order.fraud_risk_score}/100`}</b></div>
               </div>
               <div className="orderMeta"><span>{new Date(order.created_at).toLocaleString()}</span><span>ORDER: {order.status}</span><span>REVIEW: {order.fraud_review_status || "clear"}</span></div>
@@ -338,7 +355,7 @@ export default function AdminPhotos() {
                 {pendingReview ? <div className="fraudDecisionButtons">
                   <button disabled={saving === `fraud-${order.id}`} onClick={() => reviewFraudOrder(order.id, "approve")}>APPROVE FULFILLMENT</button>
                   <button className="fraudReject" disabled={saving === `fraud-${order.id}`} onClick={() => reviewFraudOrder(order.id, "reject")}>MARK SUSPECTED FRAUD</button>
-                </div> : blocked ? <small className="blockedOrder">DO NOT SHIP · Handle any refund or dispute directly in Stripe.</small> : <span className="labelActions">
+                </div> : blocked ? <small className="blockedOrder">{order.test_order ? "TEST ORDER · SHIPPING IS PERMANENTLY DISABLED" : "DO NOT SHIP · Handle any refund or dispute directly in Stripe."}</small> : <span className="labelActions">
                   {order.label_url ? <a href={order.label_url} target="_blank">PRINT LABEL</a> : <button disabled={saving === `label-${order.id}`} onClick={() => createLabel(order.id)}>{saving === `label-${order.id}` ? "LOADING…" : "GET LABEL"}</button>}
                   {order.tracking_number && <small>{order.tracking_number}</small>}
                 </span>}
@@ -377,6 +394,7 @@ export default function AdminPhotos() {
             <div className={data.emailReady ? "ready" : "missing"}><span>{data.emailReady ? "✓" : "!"}</span><p><b>EMAIL</b><small>{data.emailReady ? "Customer messages connected" : "Resend email connection required"}</small></p></div>
           </div>
           {!data.stripeReady && <div className="setupNotice"><b>Stripe setup needed</b><p>Connect your Stripe account and webhook before this switch can be activated.</p></div>}
+          <div className="setupNotice securityTestNotice"><b>Safe test mode</b><p>Runs a $1 Stripe sandbox checkout without enabling the public store, changing inventory, sending customer emails, or allowing a shipping label.</p><button onClick={startSecurityTest} disabled={!data.stripeTestReady || saving === "security-test"}>{saving === "security-test" ? "STARTING TEST…" : data.stripeTestReady ? "RUN SECURITY TEST" : "TEST MODE SETUP REQUIRED"}</button></div>
           {error && <small className="panelError">{error}</small>}
         </div>}
 

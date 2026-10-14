@@ -32,12 +32,12 @@ export async function GET() {
 
   const [summary] = await sql`
     SELECT
-      (SELECT COUNT(*)::int FROM jd_orders) AS total_orders,
-      (SELECT COALESCE(SUM(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS gross,
+      (SELECT COUNT(*)::int FROM jd_orders WHERE test_order = FALSE) AS total_orders,
+      (SELECT COALESCE(SUM(total), 0)::float FROM jd_orders WHERE test_order = FALSE AND status <> 'cancelled') AS gross,
       (SELECT COUNT(DISTINCT session_id)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '5 minutes') AS live_visitors,
       (SELECT COUNT(DISTINCT session_id)::int FROM jd_visits WHERE created_at > NOW() - INTERVAL '24 hours') AS visitors_today,
-      (SELECT COALESCE(AVG(total), 0)::float FROM jd_orders WHERE status <> 'cancelled') AS average_order,
-      (SELECT COUNT(*)::int FROM jd_orders WHERE fulfillment_hold = TRUE AND fraud_review_status = 'pending') AS fraud_reviews,
+      (SELECT COALESCE(AVG(total), 0)::float FROM jd_orders WHERE test_order = FALSE AND status <> 'cancelled') AS average_order,
+      (SELECT COUNT(*)::int FROM jd_orders WHERE test_order = FALSE AND fulfillment_hold = TRUE AND fraud_review_status = 'pending') AS fraud_reviews,
       (SELECT COUNT(*)::int FROM jd_events WHERE event_name = 'product_view' AND created_at > NOW() - INTERVAL '24 hours') AS product_views_today,
       (SELECT COUNT(*)::int FROM jd_events WHERE event_name = 'add_to_cart' AND created_at > NOW() - INTERVAL '24 hours') AS add_to_cart_today,
       (SELECT COUNT(*)::int FROM jd_events WHERE event_name = 'checkout_start' AND created_at > NOW() - INTERVAL '24 hours') AS checkout_starts_today
@@ -47,9 +47,10 @@ export async function GET() {
   const assets = await sql`SELECT id, label, data_url, updated_at FROM jd_assets ORDER BY id`;
   const customRequests = await sql`SELECT * FROM jd_custom_requests ORDER BY created_at DESC LIMIT 100`;
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET);
+  const stripeTestReady = Boolean(process.env.STRIPE_TEST_SECRET_KEY?.startsWith("sk_test_") && process.env.STRIPE_TEST_WEBHOOK_SECRET?.startsWith("whsec_"));
   const emailReady = Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM && (process.env.ADMIN_EMAIL || process.env.SHIP_FROM_EMAIL));
   const shippoReady = Boolean(process.env.SHIPPO_API_TOKEN && process.env.SHIP_FROM_NAME && process.env.SHIP_FROM_STREET1 && process.env.SHIP_FROM_CITY && process.env.SHIP_FROM_STATE && process.env.SHIP_FROM_ZIP);
-  return Response.json({ summary, products, orders, assets, customRequests, checkoutEnabled: await getCheckoutEnabled(), stripeReady, emailReady, shippoReady });
+  return Response.json({ summary, products, orders, assets, customRequests, checkoutEnabled: await getCheckoutEnabled(), stripeReady, stripeTestReady, emailReady, shippoReady });
 }
 
 export async function POST(request: Request) {
@@ -143,7 +144,7 @@ export async function POST(request: Request) {
           UPDATE jd_orders SET
             fraud_review_status = 'approved',
             fulfillment_hold = FALSE,
-            status = CASE WHEN status = 'review_required' THEN 'paid' ELSE status END
+            status = CASE WHEN test_order THEN 'security_test_approved' WHEN status = 'review_required' THEN 'paid' ELSE status END
           WHERE id = ${id} AND fraud_review_status = 'pending'
           RETURNING *
         `

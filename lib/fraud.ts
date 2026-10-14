@@ -146,8 +146,7 @@ export function compareBillingAndShippingAddresses(
   };
 }
 
-async function stripeGet<T>(path: string): Promise<T | null> {
-  const secret = process.env.STRIPE_SECRET_KEY || "";
+async function stripeGet<T>(path: string, secret: string): Promise<T | null> {
   if (!secret) return null;
   const response = await fetch(`https://api.stripe.com${path}`, {
     headers: { Authorization: `Basic ${Buffer.from(`${secret}:`).toString("base64")}` },
@@ -157,7 +156,11 @@ async function stripeGet<T>(path: string): Promise<T | null> {
   return response.json() as Promise<T>;
 }
 
-export async function assessOrderFraud(session: FraudSession, shipping: ShippingDetails): Promise<FraudAssessment> {
+export async function assessOrderFraud(
+  session: FraudSession,
+  shipping: ShippingDetails,
+  stripeSecret = process.env.STRIPE_SECRET_KEY || "",
+): Promise<FraudAssessment> {
   const paymentIntentId = typeof session.payment_intent === "string"
     ? session.payment_intent
     : String(session.payment_intent?.id || "");
@@ -180,13 +183,14 @@ export async function assessOrderFraud(session: FraudSession, shipping: Shipping
   }
 
   const paymentIntent = await stripeGet<StripePaymentIntent>(
-    `/v1/payment_intents/${encodeURIComponent(paymentIntentId)}?expand%5B%5D=latest_charge`
+    `/v1/payment_intents/${encodeURIComponent(paymentIntentId)}?expand%5B%5D=latest_charge`,
+    stripeSecret,
   );
   let charge = paymentIntent && typeof paymentIntent.latest_charge === "object"
     ? paymentIntent.latest_charge
     : null;
   if (!charge && typeof paymentIntent?.latest_charge === "string") {
-    charge = await stripeGet<StripeCharge>(`/v1/charges/${encodeURIComponent(paymentIntent.latest_charge)}`);
+    charge = await stripeGet<StripeCharge>(`/v1/charges/${encodeURIComponent(paymentIntent.latest_charge)}`, stripeSecret);
   }
 
   if (!paymentIntent || !charge) {

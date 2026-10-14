@@ -5,12 +5,12 @@ import { assessOrderFraud } from "@/lib/fraud";
 import { markCheckoutReservation, releaseCheckoutReservation } from "@/lib/inventory";
 
 function validSignature(payload: string, header: string, secret: string) {
-  const parts = Object.fromEntries(header.split(",").map(part => part.split("=")));
-  const timestamp = Number(parts.t);
-  const signature = parts.v1 || "";
+  const parts = header.split(",").map(part => part.split("=", 2));
+  const timestamp = Number(parts.find(([key]) => key === "t")?.[1]);
+  const signatures = parts.filter(([key]) => key === "v1").map(([, value]) => value || "");
   if (!timestamp || Math.abs(Date.now() / 1000 - timestamp) > 300) return false;
   const expected = createHmac("sha256", secret).update(`${timestamp}.${payload}`).digest("hex");
-  return signature.length === expected.length && timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  return signatures.some(signature => signature.length === expected.length && timingSafeEqual(Buffer.from(signature), Buffer.from(expected)));
 }
 
 function stripeObjectId(value: unknown) {
@@ -20,12 +20,21 @@ function stripeObjectId(value: unknown) {
 }
 
 export async function POST(request: Request) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET || "";
+  const liveWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+  const testWebhookSecret = process.env.STRIPE_TEST_WEBHOOK_SECRET || "";
   const payload = await request.text();
-  if (!secret || !validSignature(payload, request.headers.get("stripe-signature") || "", secret)) {
+  const signature = request.headers.get("stripe-signature") || "";
+  const verifiedLive = Boolean(liveWebhookSecret && validSignature(payload, signature, liveWebhookSecret));
+  const verifiedTest = Boolean(testWebhookSecret && validSignature(payload, signature, testWebhookSecret));
+  if (!verifiedLive && !verifiedTest) {
     return new Response("Invalid signature", { status: 400 });
   }
   const event = JSON.parse(payload);
+  const testEvent = verifiedTest && !event.livemode;
+
+  if (testEvent && !["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(event.type)) {
+    return Response.json({ received: true });
+  }
 
   if (["radar.early_fraud_warning.created", "charge.dispute.created", "review.opened"].includes(event.type)) {
     await ensureAdminTables();
@@ -81,6 +90,8 @@ export async function POST(request: Request) {
     return Response.json({ received: true });
   }
   const session = event.data.object;
+  const securityTest = Boolean(testEvent && session.metadata?.security_test === "true");
+  if (testEvent && !securityTest) return Response.json({ error: "Unrecognized test event." }, { status: 400 });
   if (!["paid", "no_payment_required"].includes(session.payment_status)) {
     const reservationKey = String(session.metadata?.reservation_key || "");
     if (reservationKey) {
@@ -97,26 +108,33 @@ export async function POST(request: Request) {
   const usedReservation = reservationKey ? await markCheckoutReservation(reservationKey, "paid") : false;
   const customer = session.customer_details || {};
   const shipping = session.collected_information?.shipping_details || session.shipping_details || {};
-  const fraud = await assessOrderFraud(session, shipping);
-  const orderStatus = fraud.fulfillmentHold ? "review_required" : "paid";
+  const fraud = await assessOrderFraud(
+    session,
+    shipping,
+    securityTest ? process.env.STRIPE_TEST_SECRET_KEY || "" : process.env.STRIPE_SECRET_KEY || "",
+  );
+  if (securityTest) fraud.signals.unshift("TEST ORDER — Stripe sandbox payment; no real money was charged.");
+  const orderStatus = securityTest
+    ? fraud.fulfillmentHold ? "security_test_review" : "security_test_passed"
+    : fraud.fulfillmentHold ? "review_required" : "paid";
   const inserted = await sql`
     INSERT INTO jd_orders (
       customer_name, customer_email, total, status, stripe_session_id, shipping_address, billing_address, address_match_status,
       stripe_payment_intent_id, stripe_charge_id, fraud_risk_level, fraud_risk_score,
-      fraud_signals, fraud_review_status, fulfillment_hold
+      fraud_signals, fraud_review_status, fulfillment_hold, test_order
     )
     VALUES (
       ${shipping.name || customer.name || "Online customer"}, ${customer.email || ""},
       ${Number(session.amount_total || 0) / 100}, ${orderStatus}, ${session.id}, ${JSON.stringify(shipping)},
       ${JSON.stringify(fraud.billingDetails)}, ${fraud.addressMatchStatus},
       ${fraud.paymentIntentId}, ${fraud.chargeId}, ${fraud.riskLevel}, ${fraud.riskScore},
-      ${JSON.stringify(fraud.signals)}, ${fraud.reviewStatus}, ${fraud.fulfillmentHold}
+      ${JSON.stringify(fraud.signals)}, ${fraud.reviewStatus}, ${fraud.fulfillmentHold}, ${securityTest}
     )
     ON CONFLICT (stripe_session_id) DO NOTHING
     RETURNING id
   `;
   if (inserted.length) {
-    if (!usedReservation) {
+    if (!securityTest && !usedReservation) {
       for (const item of cart) {
         await sql`UPDATE jd_products SET inventory = GREATEST(0, inventory - ${Number(item.quantity)}), updated_at = NOW() WHERE id = ${Number(item.id)}`;
       }
@@ -125,10 +143,10 @@ export async function POST(request: Request) {
     const orderId = Number(inserted[0].id);
     const total = (Number(session.amount_total || 0) / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
     const customerEmail = String(customer.email || "");
-    const lowStock = await sql`SELECT name, sku, inventory FROM jd_products WHERE active = TRUE AND inventory <= 5 ORDER BY inventory, name`;
+    const lowStock = securityTest ? [] : await sql`SELECT name, sku, inventory FROM jd_products WHERE active = TRUE AND inventory <= 5 ORDER BY inventory, name`;
     const notifications: Array<Promise<unknown>> = [];
 
-    if (customerEmail) {
+    if (!securityTest && customerEmail) {
       const reviewMessage = fraud.fulfillmentHold
         ? "As part of our security process, your order is awaiting a routine verification review before fulfillment."
         : "We will email tracking after your shipping label is created.";
@@ -140,7 +158,7 @@ export async function POST(request: Request) {
     }
 
     const admin = ownerEmail();
-    if (admin) {
+    if (!securityTest && admin) {
       const signalRows = fraud.signals.map(signal => `<li>${escapeHtml(signal)}</li>`).join("");
       notifications.push(sendTransactionalEmail({
         to: admin,

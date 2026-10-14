@@ -21,5 +21,6 @@
 .checkoutStatus button { border:0; background:var(--paper); color:#111; padding:16px 20px; font-size:9px; font-weight:bold; letter-spacing:.12em; }
 .checkoutStatus button:disabled { opacity:.35; cursor:not-allowed; }
 .setupNotice { border-left:2px solid var(--gold); padding:14px 18px; margin-top:18px; background:#17130e; }
+.securityTestNotice{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px 24px;border-left-color:#287fad;background:#0d1720}.securityTestNotice b{grid-column:1}.securityTestNotice p{grid-column:1}.securityTestNotice button{grid-column:2;grid-row:1/3;border:0;background:#dfeef5;color:#0a1820;padding:14px 17px;font-size:8px;font-weight:700;letter-spacing:.1em}.securityTestNotice button:disabled{opacity:.4}
 .panelError { display:block; color:#e66672; margin-top:15px; }
-@media(max-width:600px) { .checkoutStatus { align-items:stretch; flex-direction:column; } }
+@media(max-width:600px) { .checkoutStatus { align-items:stretch; flex-direction:column; }.securityTestNotice{grid-template-columns:1fr}.securityTestNotice b,.securityTestNotice p,.securityTestNotice button{grid-column:1;grid-row:auto}.securityTestNotice button{width:100%} }

@@ -114,7 +114,7 @@ let adminTablesPromise: Promise<void> | null = null;
 async function initializeAdminTables() {
   const sql = getSql();
   await ensureAdminAuthTable();
-  const schemaVersion = "2026-10-13-1";
+  const schemaVersion = "2026-10-13-2";
   const currentVersion = await sql`SELECT value FROM jd_settings WHERE key = 'schema_version' LIMIT 1`;
   if (currentVersion[0]?.value === schemaVersion) return;
 
@@ -146,6 +146,7 @@ async function initializeAdminTables() {
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS shipping_address JSONB`;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS billing_address JSONB`;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS address_match_status TEXT NOT NULL DEFAULT 'not_checked'`;
+  await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS test_order BOOLEAN NOT NULL DEFAULT FALSE`;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS label_url TEXT NOT NULL DEFAULT ''`;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS tracking_number TEXT NOT NULL DEFAULT ''`;
   await sql`ALTER TABLE jd_orders ADD COLUMN IF NOT EXISTS tracking_url TEXT NOT NULL DEFAULT ''`;
