@@ -27,20 +27,23 @@ export async function POST(request: Request) {
   }
   const event = JSON.parse(payload);
 
-  if (["radar.early_fraud_warning.created", "charge.dispute.created"].includes(event.type)) {
+  if (["radar.early_fraud_warning.created", "charge.dispute.created", "review.opened"].includes(event.type)) {
     await ensureAdminTables();
     const sql = getSql();
     const chargeId = stripeObjectId(event.data?.object?.charge);
     if (!chargeId) return Response.json({ received: true });
 
     const isDispute = event.type === "charge.dispute.created";
+    const isRadarReview = event.type === "review.opened";
     const signal = isDispute
       ? "Stripe reported a payment dispute."
-      : "Stripe issued an early fraud warning after payment.";
+      : isRadarReview
+        ? "Stripe Radar opened a manual review after payment."
+        : "Stripe issued an early fraud warning after payment.";
     const [order] = await sql`
       UPDATE jd_orders SET
-        fraud_risk_level = 'highest',
-        fraud_risk_score = 100,
+        fraud_risk_level = CASE WHEN fraud_risk_level = 'highest' THEN 'highest' ELSE ${isRadarReview ? "elevated" : "highest"} END,
+        fraud_risk_score = GREATEST(COALESCE(fraud_risk_score, 0), ${isRadarReview ? 65 : 100}),
         fraud_signals = COALESCE(fraud_signals, '[]'::jsonb) || jsonb_build_array(${signal}),
         fraud_review_status = ${isDispute ? "disputed" : "pending"},
         fulfillment_hold = TRUE,
@@ -98,13 +101,14 @@ export async function POST(request: Request) {
   const orderStatus = fraud.fulfillmentHold ? "review_required" : "paid";
   const inserted = await sql`
     INSERT INTO jd_orders (
-      customer_name, customer_email, total, status, stripe_session_id, shipping_address,
+      customer_name, customer_email, total, status, stripe_session_id, shipping_address, billing_address, address_match_status,
       stripe_payment_intent_id, stripe_charge_id, fraud_risk_level, fraud_risk_score,
       fraud_signals, fraud_review_status, fulfillment_hold
     )
     VALUES (
       ${shipping.name || customer.name || "Online customer"}, ${customer.email || ""},
       ${Number(session.amount_total || 0) / 100}, ${orderStatus}, ${session.id}, ${JSON.stringify(shipping)},
+      ${JSON.stringify(fraud.billingDetails)}, ${fraud.addressMatchStatus},
       ${fraud.paymentIntentId}, ${fraud.chargeId}, ${fraud.riskLevel}, ${fraud.riskScore},
       ${JSON.stringify(fraud.signals)}, ${fraud.reviewStatus}, ${fraud.fulfillmentHold}
     )

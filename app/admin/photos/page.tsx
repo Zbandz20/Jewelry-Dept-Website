@@ -15,7 +15,9 @@ type DashboardData = {
     total: number;
     status: string;
     created_at: string;
-    shipping_address?: { address?: Record<string,string> };
+    shipping_address?: { name?: string; address?: Record<string,string> };
+    billing_address?: { name?: string; address?: Record<string,string> };
+    address_match_status?: "match" | "mismatch" | "incomplete" | "not_checked";
     label_url?: string;
     tracking_number?: string;
     tracking_url?: string;
@@ -260,6 +262,10 @@ export default function AdminPhotos() {
   );
 
   const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+  const formatAddress = (details?: { name?: string; address?: Record<string,string> }) => {
+    const address = details?.address || {};
+    return [details?.name, address.line1, address.line2, [address.city, address.state, address.postal_code].filter(Boolean).join(", "), address.country].filter(Boolean);
+  };
   return (
     <main className="adminShell">
       <aside>
@@ -311,12 +317,22 @@ export default function AdminPhotos() {
             const riskSignals = Array.isArray(order.fraud_signals) ? order.fraud_signals : [];
             const pendingReview = Boolean(order.fulfillment_hold && order.fraud_review_status === "pending");
             const blocked = order.fraud_review_status === "rejected" || order.fraud_review_status === "disputed";
+            const billingAddress = formatAddress(order.billing_address);
+            const shippingAddress = formatAddress(order.shipping_address);
+            const addressStatus = order.address_match_status || "not_checked";
             return <article className={`orderReviewCard ${order.fulfillment_hold ? "held" : ""}`} key={order.id}>
               <div className="orderReviewHead">
                 <div><span>ORDER #{order.id}</span><h3>{order.customer_name}</h3><p>{order.customer_email}</p></div>
                 <div className="orderValue"><strong>{money(order.total)}</strong><b className={`riskBadge risk-${riskLevel.replace("_", "-")}`}>{riskLevel.replace("_", " ")} risk{order.fraud_risk_score == null ? "" : ` · ${order.fraud_risk_score}/100`}</b></div>
               </div>
               <div className="orderMeta"><span>{new Date(order.created_at).toLocaleString()}</span><span>ORDER: {order.status}</span><span>REVIEW: {order.fraud_review_status || "clear"}</span></div>
+              <div className="addressReview">
+                <div className="addressReviewHead"><b>ADDRESS VERIFICATION</b><span className={`addressStatus address-${addressStatus}`}>{addressStatus.replace("_", " ")}</span></div>
+                <div className="addressColumns">
+                  <div><strong>BILLING</strong>{billingAddress.length ? billingAddress.map((line, index) => <span key={index}>{line}</span>) : <span>Not available</span>}</div>
+                  <div><strong>SHIPPING</strong>{shippingAddress.length ? shippingAddress.map((line, index) => <span key={index}>{line}</span>) : <span>Not available</span>}</div>
+                </div>
+              </div>
               {riskSignals.length > 0 && <ul className="riskSignals">{riskSignals.map((signal, index) => <li key={index}>{signal}</li>)}</ul>}
               <div className="orderActions">
                 {pendingReview ? <div className="fraudDecisionButtons">

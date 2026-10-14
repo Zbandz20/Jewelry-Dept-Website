@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   const origin = new URL(request.url).origin;
   form.set("mode", "payment");
   form.set("payment_method_types[0]", "card");
+  form.set("payment_method_options[card][request_three_d_secure]", "any");
   form.set("expires_at", String(Math.floor(expiresAt.getTime() / 1000)));
   form.set("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
   form.set("cancel_url", `${origin}/#pieces`);
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
   form.set("metadata[shipping_policy]", freeShipping ? "free_over_100" : `standard_${standardShippingCents}`);
   form.set("metadata[cart]", JSON.stringify(cartMeta));
   form.set("metadata[reservation_key]", reservationKey);
-  form.set("metadata[fraud_screening]", "stripe_radar_plus_internal_review");
+  form.set("metadata[fraud_screening]", "radar_avs_cvc_3ds_address_match_manual_hold");
   form.set("payment_intent_data[description]", "Jewelry Dept. online order");
   form.set("payment_intent_data[metadata][store]", "jewelry_dept");
   form.set("payment_intent_data[metadata][item_count]", String(cartMeta.reduce((total, item) => total + item.quantity, 0)));
