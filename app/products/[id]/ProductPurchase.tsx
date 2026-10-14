@@ -22,13 +22,24 @@ function track(eventName: "product_view" | "checkout_start", productId: number, 
   }).catch(() => {});
 }
 
-export default function ProductPurchase({ id, price, inventory }: { id: number; price: number; inventory: number }) {
+export default function ProductPurchase({
+  id,
+  price,
+  inventory,
+  checkoutEnabled,
+}: {
+  id: number;
+  price: number;
+  inventory: number;
+  checkoutEnabled: boolean;
+}) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => { track("product_view", id, price); }, [id, price]);
 
   async function buyNow() {
+    if (!checkoutEnabled) return;
     setBusy(true);
     setMessage("");
     track("checkout_start", id, price);
@@ -48,8 +59,14 @@ export default function ProductPurchase({ id, price, inventory }: { id: number; 
 
   return (
     <div className="productPurchase">
-      <button className="primary productBuyNow" disabled={inventory < 1 || busy} onClick={buyNow}>
-        {inventory < 1 ? "SOLD OUT" : busy ? "OPENING SECURE CHECKOUT…" : "BUY THIS PIECE →"}
+      <button className="primary productBuyNow" disabled={inventory < 1 || !checkoutEnabled || busy} onClick={buyNow}>
+        {inventory < 1
+          ? "SOLD OUT"
+          : !checkoutEnabled
+            ? "CHECKOUT COMING SOON"
+            : busy
+              ? "OPENING SECURE CHECKOUT…"
+              : "BUY THIS PIECE →"}
       </button>
       <Link className="productContinue" href="/#pieces">CONTINUE SHOPPING</Link>
       {message && <p role="status">{message}</p>}

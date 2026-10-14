@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cache } from "react";
-import { ensureAdminTables, getSql } from "@/lib/admin";
+import { ensureAdminTables, getCheckoutEnabled, getSql } from "@/lib/admin";
 import ProductPurchase from "./ProductPurchase";
 
 type Product = { id: number; name: string; sku: string; price: number; inventory: number; image_url: string; description: string };
@@ -53,6 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const product = await productById(Number((await params).id));
   if (!product) notFound();
+  const checkoutEnabled = await getCheckoutEnabled();
   const productStructuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -83,7 +84,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <p className="productDescription">{product.description || "Hand-finished by Jewelry Dept."}</p>
           <div className="detailBadges"><span>SOLID 925 STERLING SILVER</span><span>MOISSANITE STONES</span></div>
           <div className={product.inventory > 0 ? "stockStatus available" : "stockStatus"}>{product.inventory > 0 ? `${product.inventory} ready to ship` : "Currently sold out"}</div>
-          <ProductPurchase id={product.id} price={product.price} inventory={product.inventory} />
+          <ProductPurchase id={product.id} price={product.price} inventory={product.inventory} checkoutEnabled={checkoutEnabled} />
           <dl className="productFacts">
             <div><dt>Materials</dt><dd>Solid 925 sterling silver and moissanite</dd></div>
             <div><dt>Authenticity</dt><dd>Inspected by Jewelry Dept.</dd></div>
