@@ -9,6 +9,8 @@
 
 .adminLogin .textButton { background:transparent; color:#999; margin-top:8px; padding:10px; }
 .adminLogin form label:not(:first-of-type) { margin-top:16px; }
+.adminLogin .recoveryNotice { color:#aaa; font-size:13px; letter-spacing:0; line-height:1.55; }
+.adminLogin .recoveryQuestion { color:var(--paper); font-family:Georgia,serif; font-size:20px; letter-spacing:0; line-height:1.35; margin:24px 0; }
 .securityStack { display:grid; gap:4px; }
 .checkoutStatus { display:flex; justify-content:space-between; align-items:center; gap:24px; padding:25px; background:#0d0d0d; }
 .checkoutStatus>div { display:flex; align-items:center; gap:16px; }

@@ -43,6 +43,10 @@ export default function AdminPhotos() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [recoveryQuestionPrompt, setRecoveryQuestionPrompt] = useState("");
+  const [recoveryAnswerAttempt, setRecoveryAnswerAttempt] = useState("");
+  const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [recoveryError, setRecoveryError] = useState("");
   const [securityQuestion, setSecurityQuestion] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
@@ -129,6 +133,7 @@ export default function AdminPhotos() {
 
   async function startRecovery() {
     setError("");
+    setRecoveryError("");
     setSaving("recovery");
     const response = await fetch("/api/admin/recovery", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -137,8 +142,23 @@ export default function AdminPhotos() {
     const result = await response.json();
     setSaving("");
     if (!response.ok) return setError(result.error || "Password recovery is not available.");
-    setSecurityMessage(result.message || "A secure reset link has been sent.");
+    setRecoveryQuestionPrompt(result.mode === "question" ? String(result.question || "") : "");
+    setRecoveryMessage(result.mode === "question" ? "Answer the question below to set a new password." : result.message || "A secure reset link has been sent.");
     setRecoveryMode(true);
+  }
+
+  async function verifyRecoveryQuestion(event: React.FormEvent) {
+    event.preventDefault();
+    setRecoveryError("");
+    setSaving("recovery-answer");
+    const response = await fetch("/api/admin/recovery", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "verify-answer", answer: recoveryAnswerAttempt }),
+    });
+    const result = await response.json();
+    setSaving("");
+    if (!response.ok) return setRecoveryError(result.error || "That answer could not be verified.");
+    window.location.assign(`/admin/reset?token=${encodeURIComponent(result.token)}`);
   }
 
   async function saveRecoveryQuestion(event: React.FormEvent) {
@@ -209,12 +229,18 @@ export default function AdminPhotos() {
 
   if (!data && recoveryMode) return (
     <main className="adminLogin">
-      <form onSubmit={(event) => event.preventDefault()}>
+      <form onSubmit={recoveryQuestionPrompt ? verifyRecoveryQuestion : (event) => event.preventDefault()}>
         <span className="adminFlag"><i></i><i></i><i></i></span>
-        <p>JEWELRY DEPT.</p><h1>Check your<br /><em>email.</em></h1>
-        <p className="recoveryNotice">{securityMessage}</p>
-        <small>The link expires in 30 minutes and works once.</small>
-        <button className="textButton" type="button" onClick={() => { setRecoveryMode(false); setError(""); }}>BACK TO SIGN IN</button>
+        <p>JEWELRY DEPT.</p><h1>{recoveryQuestionPrompt ? <>Verify your<br /><em>identity.</em></> : <>Check your<br /><em>email.</em></>}</h1>
+        <p className="recoveryNotice">{recoveryMessage}</p>
+        {recoveryQuestionPrompt ? <>
+          <p className="recoveryQuestion">{recoveryQuestionPrompt}</p>
+          <label htmlFor="recovery-answer">Security answer</label>
+          <input id="recovery-answer" type="password" value={recoveryAnswerAttempt} onChange={event => setRecoveryAnswerAttempt(event.target.value)} minLength={3} maxLength={200} autoComplete="off" required autoFocus />
+          {recoveryError && <small>{recoveryError}</small>}
+          <button disabled={saving === "recovery-answer"}>{saving === "recovery-answer" ? "VERIFYING…" : "CONTINUE"}</button>
+        </> : <small>The link expires in 30 minutes and works once.</small>}
+        <button className="textButton" type="button" onClick={() => { setRecoveryMode(false); setRecoveryQuestionPrompt(""); setRecoveryAnswerAttempt(""); setRecoveryError(""); setError(""); }}>BACK TO SIGN IN</button>
       </form>
     </main>
   );
@@ -228,7 +254,7 @@ export default function AdminPhotos() {
         <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
         {error && <small>{error}</small>}
         <button>ENTER DASHBOARD</button>
-        <button className="textButton" type="button" onClick={startRecovery} disabled={saving === "recovery"}>{saving === "recovery" ? "SENDING SECURE LINK…" : "FORGOT PASSWORD?"}</button>
+        <button className="textButton" type="button" onClick={startRecovery} disabled={saving === "recovery"}>{saving === "recovery" ? "CHECKING RECOVERY…" : "FORGOT PASSWORD?"}</button>
       </form>
     </main>
   );
@@ -342,9 +368,9 @@ export default function AdminPhotos() {
         <div className="adminPanel securityPanel">
           <div className="panelHead"><div><p>MANAGEMENT ACCESS</p><h2>Set a new password</h2></div><span>Your password is encrypted before storage</span></div>
           <form onSubmit={changePassword}>
-            <label>New password<input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={10} autoComplete="new-password" /></label>
-            <label>Confirm new password<input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={10} autoComplete="new-password" /></label>
-            <small className={passwordMessage.includes("successfully") ? "success" : ""}>{passwordMessage || "Use at least 10 characters."}</small>
+            <label>New password<input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={12} autoComplete="new-password" /></label>
+            <label>Confirm new password<input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={12} autoComplete="new-password" /></label>
+            <small className={passwordMessage.includes("successfully") ? "success" : ""}>{passwordMessage || "Use at least 12 characters."}</small>
             <button disabled={saving === "password"}>{saving === "password" ? "UPDATING…" : "UPDATE PASSWORD"}</button>
           </form>
         </div>

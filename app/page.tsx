@@ -99,8 +99,8 @@ export default function Home() {
 
   async function startCheckout() {
     setCheckoutError("");
-    trackStoreEvent("checkout_start", undefined, cartTotal);
     if (!checkoutEnabled) return setCheckoutError("Checkout is opening soon.");
+    trackStoreEvent("checkout_start", undefined, cartTotal);
     const counts = cartItems.reduce<Record<number, number>>((all, id) => ({ ...all, [id]: (all[id] || 0) + 1 }), {});
     setCheckoutBusy(true);
     const response = await fetch("/api/checkout", {
@@ -197,7 +197,7 @@ export default function Home() {
 
       <section className="manifesto">
         <span>01 / FEEL</span>
-        <h2>You don’t wear it to be seen.<br />You wear it so they <em>never forget.</em></h2>
+        <h1>You don’t wear it to be seen.<br />You wear it so they <em>never forget.</em></h1>
         <p>Every piece leaves the bench certified, hand-set, and cut to throw light across a room. This isn’t jewelry that whispers. It announces.</p>
       </section>
 
@@ -226,7 +226,7 @@ export default function Home() {
 
       <section className="featured" id="drop">
         <div className="productVisual">
-          <img src={featuredProduct.image_url || siteImages.featured} alt={featuredProduct.name} />
+          <img src={featuredProduct.image_url || siteImages.featured} alt={featuredProduct.name} fetchPriority="high" decoding="async" />
           <span className="dropTag">DROP 05 · LIMITED</span>
         </div>
         <div className="featuredInfo">
@@ -258,7 +258,7 @@ export default function Home() {
           {visibleProducts.map((product, index) => (
             <article className="card" key={product.name}>
               <Link className={`cardImage crop${index + 1}`} href={`/products/${product.id}`} aria-label={`View details for ${product.name}`}>
-                <img src={product.image_url || siteImages.featured} alt={product.name} />
+                <img src={product.image_url || siteImages.featured} alt={product.name} loading="lazy" decoding="async" />
                 <span>{product.inventory > 0 ? `${product.inventory} AVAILABLE` : "SOLD OUT"}</span>
               </Link>
               <div className="cardTop"><h3><Link href={`/products/${product.id}`}>{product.name}</Link></h3><strong>${product.price.toLocaleString()}</strong></div>
@@ -342,7 +342,7 @@ export default function Home() {
           <div className="cartDrawerHead"><div><p>YOUR BAG</p><h2>{cart} {cart === 1 ? "piece" : "pieces"}</h2></div><button onClick={() => setCartOpen(false)} aria-label="Close shopping bag">CLOSE ×</button></div>
           <div className="cartLines">
             {cartLines.map(product => <article key={product.id}>
-              <img src={product.image_url || siteImages.featured} alt="" />
+              <img src={product.image_url || siteImages.featured} alt="" loading="lazy" decoding="async" />
               <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button onClick={() => setCartItems(items => { const index = items.indexOf(product.id); return index < 0 ? items : items.filter((_, itemIndex) => itemIndex !== index); })}>REMOVE ONE</button></div>
               <strong>${(product.price * product.quantity).toLocaleString()}</strong>
             </article>)}
@@ -350,13 +350,13 @@ export default function Home() {
           <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
           <p className="cartNote">{cartTotal > 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : "Standard shipping is $9.95 and will be shown at checkout. Add $" + Math.max(0.01, 100.01 - cartTotal).toFixed(2) + " more for free shipping."}</p>
           {checkoutError && <p className="cartError">{checkoutError}</p>}
-          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1}>{checkoutBusy ? "OPENING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
+          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1 || !checkoutEnabled}>{checkoutBusy ? "OPENING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
         </aside>
       </div>}
 
       {cart > 0 && <div className="checkoutBar">
         <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} · ${cartTotal.toLocaleString()}</b>{checkoutError && <span>{checkoutError}</span>}</div>
-        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
+        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "OPENING SECURE CHECKOUT…" : checkoutEnabled ? "CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
       </div>}
 
       <footer>

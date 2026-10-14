@@ -76,7 +76,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData) }} />
       <nav className="simpleNav"><Link href="/">JEWELRY DEPT.</Link><Link href="/#pieces">BACK TO SHOP</Link></nav>
       <section className="productDetail">
-        <div className="productDetailImage"><img src={product.image_url || "/images/cuban.jpg"} alt={product.name} /></div>
+        <div className="productDetailImage"><img src={product.image_url || "/images/cuban.jpg"} alt={product.name} fetchPriority="high" decoding="async" /></div>
         <div className="productDetailInfo">
           <p className="eyebrow">JEWELRY DEPT. COLLECTION</p>
           <h1>{product.name}</h1>
