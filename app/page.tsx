@@ -39,6 +39,7 @@ export default function Home() {
   const [cartItems, setCartItems] = useState<number[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [menuSuppressed, setMenuSuppressed] = useState(false);
   const [siteImages, setSiteImages] = useState({ hero: "/images/hero.jpg", featured: "/images/cuban.jpg" });
   const [checkoutEnabled, setCheckoutEnabled] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
@@ -162,6 +163,17 @@ export default function Home() {
     ? marketUpdatedDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
     : "Loading current market";
 
+  function toggleMenu() {
+    const willOpen = !menu;
+    setMenu(willOpen);
+    setMenuSuppressed(!willOpen);
+  }
+
+  function closeMenu() {
+    setMenu(false);
+    setMenuSuppressed(false);
+  }
+
   return (
     <main>
       <div className="ticker">
@@ -178,16 +190,16 @@ export default function Home() {
       </div>
 
       <nav className="nav">
-        {menu && <button className="menuDismiss" onClick={() => setMenu(false)} aria-label="Close navigation menu" />}
-        <div className="menuCluster" ref={menuRef}>
-          <button className="menuButton" onClick={() => setMenu(open => !open)} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
+        {menu && <button className="menuDismiss" onClick={closeMenu} aria-label="Close navigation menu" />}
+        <div className={`menuCluster ${menuSuppressed ? "menuSuppressed" : ""}`} ref={menuRef} onPointerLeave={() => setMenuSuppressed(false)}>
+          <button className="menuButton" onClick={toggleMenu} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
           <div className={`navlinks ${menu ? "open" : ""}`}>
-            <a href="#drop" onClick={() => setMenu(false)}>FEATURED</a>
-            <a href="#pieces" onClick={() => setMenu(false)}>SHOP ALL</a>
-            <a href="/reviews" onClick={() => setMenu(false)}>REVIEWS</a>
-            <a href="/faq" onClick={() => setMenu(false)}>FAQ</a>
-            <a href="#custom" onClick={() => setMenu(false)}>CUSTOM</a>
-            <a href="#proof" onClick={() => setMenu(false)}>THE STONE</a>
+            <a href="#drop" onClick={closeMenu}>FEATURED</a>
+            <a href="#pieces" onClick={closeMenu}>SHOP ALL</a>
+            <a href="/reviews" onClick={closeMenu}>REVIEWS</a>
+            <a href="/faq" onClick={closeMenu}>FAQ</a>
+            <a href="#custom" onClick={closeMenu}>CUSTOM</a>
+            <a href="#proof" onClick={closeMenu}>THE STONE</a>
           </div>
         </div>
         <Logo />
