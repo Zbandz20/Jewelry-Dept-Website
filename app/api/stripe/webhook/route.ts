@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       ${fraud.paymentIntentId}, ${fraud.chargeId}, ${fraud.riskLevel}, ${fraud.riskScore},
       ${JSON.stringify(fraud.signals)}, ${fraud.reviewStatus}, ${fraud.fulfillmentHold}, ${securityTest}
     )
-    ON CONFLICT (stripe_session_id) DO NOTHING
+    ON CONFLICT (stripe_session_id) WHERE stripe_session_id IS NOT NULL DO NOTHING
     RETURNING id
   `;
   if (inserted.length) {
