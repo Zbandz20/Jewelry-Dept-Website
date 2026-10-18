@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://jewelrydept.co"),
   title: "Jewelry Dept. — Fire Without Compromise",
   description: "Moissanite, lab-grown and natural diamonds set in solid 10k–24k gold. Made to order and set by hand.",
+  icons: {
+    icon: [{ url: "/images/jewelry-dept-shopify-logo-transparent.png", type: "image/png" }],
+    apple: [{ url: "/images/jewelry-dept-shopify-logo-transparent.png", type: "image/png" }],
+  },
   alternates: { canonical: "/" },
   openGraph: {
     title: "Jewelry Dept. — Fire Without Compromise",
