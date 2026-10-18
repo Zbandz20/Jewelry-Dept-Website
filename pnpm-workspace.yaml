@@ -1,6 +1,8 @@
 allowBuilds:
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  sharp: true
+  unrs-resolver: true
+overrides:
+  source-map-js: 1.2.2
 onlyBuiltDependencies:
   - sharp
   - unrs-resolver

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import "../photos/admin.css";
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -29,7 +31,7 @@ export default function ResetPasswordPage() {
     const result = await response.json();
     setBusy(false);
     if (!response.ok) return setMessage(result.error || "Password could not be reset.");
-    window.location.href = "/admin/photos";
+    router.push("/admin/photos");
   }
 
   return (

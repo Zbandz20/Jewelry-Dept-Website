@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import "./admin.css";
 import "./security.css";
 import "./catalog.css";
@@ -38,6 +39,7 @@ type DashboardData = {
 };
 
 export default function AdminPhotos() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -168,7 +170,7 @@ export default function AdminPhotos() {
     const result = await response.json();
     setSaving("");
     if (!response.ok) return setRecoveryError(result.error || "That answer could not be verified.");
-    window.location.assign(`/admin/reset?token=${encodeURIComponent(result.token)}`);
+    router.push(`/admin/reset?token=${encodeURIComponent(result.token)}`);
   }
 
   async function saveRecoveryQuestion(event: React.FormEvent) {
