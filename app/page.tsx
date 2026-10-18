@@ -32,7 +32,7 @@ function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_s
   }).catch(() => {});
 }
 const fallbackProducts: Product[] = [
-  { id: -1, name: "6mm Moissanite Cuban Bracelet", description: "Authentic 6mm Moissanite Cuban Bracelet from Jewelry Dept.", price: 250, inventory: 0, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/AAD37993-02AD-4948-BF25-D7A330AC1D91.jpg?v=1772470224&width=1200" },
+  { id: 5, name: "6mm Moissanite Cuban Bracelet", description: "Authentic 6mm Moissanite Cuban Bracelet from Jewelry Dept.", price: 250, inventory: 0, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/AAD37993-02AD-4948-BF25-D7A330AC1D91.jpg?v=1772470224&width=1200" },
 ];
 
 export default function Home() {
