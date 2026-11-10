@@ -1,16 +1,18 @@
 /* Final storefront layout overrides — preserve the existing black, blue, and gold palette. */
 
-/* The original logo rules used object-fit: cover and a scale transform, cropping the lettering. */
+/*
+ * The logo artwork sits on a square transparent canvas. Centering that canvas
+ * inside a short viewport keeps every letter visible without a tall empty header.
+ */
 .nav > .wordmark,
 footer > .wordmark {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  position: relative !important;
+  display: block !important;
   width: clamp(180px, 22vw, 300px) !important;
-  height: auto !important;
-  min-height: 78px !important;
-  max-height: none !important;
-  overflow: visible !important;
+  height: 96px !important;
+  min-height: 0 !important;
+  max-height: 96px !important;
+  overflow: hidden !important;
   padding: 0 !important;
   margin: 0 auto !important;
   flex: 0 0 auto !important;
@@ -18,21 +20,24 @@ footer > .wordmark {
 
 .nav > .wordmark > img,
 footer > .wordmark > img {
+  position: absolute !important;
+  top: 48% !important;
+  left: 50% !important;
   display: block !important;
   visibility: visible !important;
   width: 100% !important;
   height: auto !important;
-  max-width: 100% !important;
-  max-height: 140px !important;
+  max-width: none !important;
+  max-height: none !important;
   object-fit: contain !important;
   object-position: center center !important;
-  transform: none !important;
+  transform: translate(-50%, -50%) !important;
   filter: brightness(0) invert(1) drop-shadow(0 2px 2px rgba(0,0,0,.82)) !important;
 }
 
 .nav {
-  min-height: 190px !important;
-  height: auto !important;
+  min-height: 104px !important;
+  height: 104px !important;
   overflow: visible !important;
 }
 
@@ -70,13 +75,15 @@ footer > .wordmark > img {
 
 @media (max-width: 900px) {
   .nav {
-    min-height: 170px !important;
+    min-height: 92px !important;
+    height: 92px !important;
   }
 
   .nav > .wordmark,
   footer > .wordmark {
     width: min(240px, 34vw) !important;
-    min-height: 72px !important;
+    height: 84px !important;
+    max-height: 84px !important;
   }
 
   .featured .productVisual {
@@ -87,13 +94,15 @@ footer > .wordmark > img {
 
 @media (max-width: 600px) {
   .nav {
-    min-height: 145px !important;
+    min-height: 82px !important;
+    height: 82px !important;
   }
 
   .nav > .wordmark,
   footer > .wordmark {
     width: min(190px, 38vw) !important;
-    min-height: 70px !important;
+    height: 74px !important;
+    max-height: 74px !important;
   }
 
   .featured .productVisual {
