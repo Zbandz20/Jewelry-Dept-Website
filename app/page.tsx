@@ -11,7 +11,23 @@ type GoldPricing = {
   purity?: Record<string, number>;
   craftsmanship?: Record<string, { label?: string; perGram: number; minimum: number }>;
 };
+
 const shopCategories = ["ALL", "CHAINS", "BRACELETS", "EARRINGS", "RINGS", "PENDANTS", "SETS & WATCHES"] as const;
+
+function getSessionId() {
+  try {
+    const key = "jd-session";
+    let sessionId = window.sessionStorage.getItem(key);
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      window.sessionStorage.setItem(key, sessionId);
+    }
+    return sessionId;
+  } catch {
+    return "";
+  }
+}
+
 function productCategory(name: string) {
   const value = name.toLowerCase();
   if (value.includes("set") || value.includes("watch")) return "SETS & WATCHES";
@@ -27,8 +43,9 @@ function productSpec(name: string) {
   const width = name.match(/\b\d+(?:\.\d+)?mm\b/i)?.[0]?.toUpperCase();
   return ["SOLID 925 SILVER", "MOISSANITE", width].filter(Boolean).join(" · ");
 }
+
 function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_start" | "newsletter_signup" | "custom_request", productId?: number, amount?: number) {
-  const sessionId = sessionStorage.getItem("jd-session") || "";
+  const sessionId = getSessionId();
   if (!sessionId) return;
   fetch("/api/track", {
     method: "POST",
@@ -36,6 +53,7 @@ function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_s
     body: JSON.stringify({ sessionId, eventName, productId, amount, path: window.location.pathname }),
   }).catch(() => {});
 }
+
 const fallbackProducts: Product[] = [
   { id: 5, name: "6mm Moissanite Cuban Bracelet", description: "Authentic 6mm Moissanite Cuban Bracelet from Jewelry Dept.", price: 250, inventory: 0, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/6mm-moissanite-cuban-bracelet.jpg?v=1759016685" },
   { id: 6, name: "3mm Tennis Chain", description: "Fine tennis chain set in solid sterling silver with moissanite stones.", price: 680, inventory: 4, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/3mm-tennis-chain.jpg?v=1759016686" },
@@ -86,13 +104,10 @@ export default function Home() {
       setCheckoutEnabled(Boolean(content?.checkoutEnabled));
     }).catch(() => {}).finally(() => setCatalogLoading(false));
 
-    const storageKey = "jd-session";
-    let sessionId = sessionStorage.getItem(storageKey);
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      sessionStorage.setItem(storageKey, sessionId);
+    const sessionId = getSessionId();
+    if (sessionId) {
+      fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
     }
-    fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
 
     const refreshMetals = () => fetch("/api/custom-quote")
       .then(response => response.ok ? response.json() : null)
@@ -120,11 +135,12 @@ export default function Home() {
     setCheckoutBusy(true);
     try {
       const response = await fetch("/api/checkout", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: Object.entries(counts).map(([id, quantity]) => ({ id: Number(id), quantity })) }),
       });
       const result = await response.json();
-      if (!response.ok) return setCheckoutError(result.error || "Checkout could not start.");
+      if (!response.ok || !result?.url) return setCheckoutError(result?.error || "Checkout could not start.");
       window.location.assign(result.url);
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Checkout could not start.");
@@ -135,7 +151,8 @@ export default function Home() {
 
   async function submitCustomRequest(event: React.FormEvent) {
     event.preventDefault();
-    setCustomBusy(true); setCustomMessage("");
+    setCustomBusy(true);
+    setCustomMessage("");
     try {
       const response = await fetch("/api/custom-quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(customForm) });
       const result = await response.json();
@@ -156,12 +173,16 @@ export default function Home() {
     setNewsletterBusy(true);
     try {
       const response = await fetch("/api/newsletter", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: newsletterEmail }),
       });
       const result = await response.json();
       setNewsletterMessage(result.message || result.error || "Signup could not be completed.");
-      if (response.ok) { trackStoreEvent("newsletter_signup"); setNewsletterEmail(""); }
+      if (response.ok) {
+        trackStoreEvent("newsletter_signup");
+        setNewsletterEmail("");
+      }
     } catch (error) {
       setNewsletterMessage(error instanceof Error ? error.message : "Signup could not be completed.");
     } finally {
@@ -181,12 +202,14 @@ export default function Home() {
   const metalAllowance = metalCost * 0.15;
   const craftCost = craft ? Math.max(Number(craft.minimum), Number(customForm.grams) * Number(craft.perGram)) : 0;
   const customEstimate = Math.ceil((metalCost + metalAllowance + craftCost) / 5) * 5;
+
   const formatMarketPrice = (value: unknown, digits = 2) => {
     const price = Number(value);
     return Number.isFinite(price) && price > 0
       ? price.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits })
       : "—";
   };
+
   const marketUpdated = goldMarket?.updatedAt || silverMarket?.updatedAt;
   const marketUpdatedDate = marketUpdated ? new Date(marketUpdated) : null;
   const marketUpdatedLabel = marketUpdatedDate && !Number.isNaN(marketUpdatedDate.getTime())
@@ -220,7 +243,7 @@ export default function Home() {
       </div>
 
       <nav className="nav">
-        {menu && <button className="menuDismiss" onClick={closeMenu} aria-label="Close navigation menu" />}
+        {menu && <button type="button" className="menuDismiss" onClick={closeMenu} aria-label="Close navigation menu" />}
         <div className="desktopNav" aria-label="Primary navigation">
           <a href="#pieces">SHOP ALL</a>
           <a href="#pieces" onClick={() => setShopCategory("CHAINS")}>CHAINS</a>
@@ -407,7 +430,7 @@ export default function Home() {
           <div className="cartLines">
             {cartLines.map(product => <article key={product.id}>
               <img src={product.image_url || siteImages.featured} alt="" loading="lazy" decoding="async" />
-              <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button type="button" onClick={() => setCartItems(items => { const index = items.indexOf(product.id); return index < 0 ? items : items.filter((_, itemIndex) => itemIndex !== index); })}>REMOVE</button></div>
+              <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button type="button" onClick={() => setCartItems(items => items.filter(id => id !== product.id))}>REMOVE</button></div>
               <strong>${(product.price * product.quantity).toLocaleString()}</strong>
             </article>)}
           </div>
