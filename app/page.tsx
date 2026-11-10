@@ -387,13 +387,13 @@ export default function Home() {
           <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
           <p className="cartNote">{cartTotal >= 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : cartTotal === 0 ? "Free standard shipping on orders of $100 or more." : "Shipping and taxes are calculated at checkout."}</p>
           {checkoutError && <p className="cartError">{checkoutError}</p>}
-          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "CHECKING OUT…" : "CHECKOUT"}</button></div>
+          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1 || !checkoutEnabled}>{checkoutBusy ? "CHECKING OUT…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
         </aside>
       </div>}
 
       {cart > 0 && <div className="checkoutBar">
         <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} · ${cartTotal.toLocaleString()}</b>{checkoutError && <span>{checkoutError}</span>}</div>
-        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "PROCESSING…" : "CHECKOUT"}</button></div>
+        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "PROCESSING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
       </div>}
 
       <footer>
