@@ -11,23 +11,7 @@ type GoldPricing = {
   purity?: Record<string, number>;
   craftsmanship?: Record<string, { label?: string; perGram: number; minimum: number }>;
 };
-
 const shopCategories = ["ALL", "CHAINS", "BRACELETS", "EARRINGS", "RINGS", "PENDANTS", "SETS & WATCHES"] as const;
-
-function getSessionId() {
-  try {
-    const key = "jd-session";
-    let sessionId = window.sessionStorage.getItem(key);
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      window.sessionStorage.setItem(key, sessionId);
-    }
-    return sessionId;
-  } catch {
-    return "";
-  }
-}
-
 function productCategory(name: string) {
   const value = name.toLowerCase();
   if (value.includes("set") || value.includes("watch")) return "SETS & WATCHES";
@@ -43,9 +27,8 @@ function productSpec(name: string) {
   const width = name.match(/\b\d+(?:\.\d+)?mm\b/i)?.[0]?.toUpperCase();
   return ["SOLID 925 SILVER", "MOISSANITE", width].filter(Boolean).join(" · ");
 }
-
 function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_start" | "newsletter_signup" | "custom_request", productId?: number, amount?: number) {
-  const sessionId = getSessionId();
+  const sessionId = sessionStorage.getItem("jd-session") || "";
   if (!sessionId) return;
   fetch("/api/track", {
     method: "POST",
@@ -53,12 +36,8 @@ function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_s
     body: JSON.stringify({ sessionId, eventName, productId, amount, path: window.location.pathname }),
   }).catch(() => {});
 }
-
 const fallbackProducts: Product[] = [
-  { id: 5, name: "6mm Moissanite Cuban Bracelet", description: "Authentic 6mm Moissanite Cuban Bracelet from Jewelry Dept.", price: 250, inventory: 0, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/6mm-moissanite-cuban-bracelet.jpg?v=1759016685" },
-  { id: 6, name: "3mm Tennis Chain", description: "Fine tennis chain set in solid sterling silver with moissanite stones.", price: 680, inventory: 4, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/3mm-tennis-chain.jpg?v=1759016686" },
-  { id: 7, name: "Two-Tone Cuban Chain", description: "Two-tone Cuban chain finished in brushed sterling silver and gold-toned accents.", price: 980, inventory: 2, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/two-tone-cuban-chain.jpg?v=1759016687" },
-  { id: 8, name: "Halo Stud Earrings", description: "Classic halo studs for a bright, balanced daily sparkle.", price: 420, inventory: 5, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/halo-stud-earrings.jpg?v=1759016688" },
+  { id: 5, name: "6mm Moissanite Cuban Bracelet", description: "Authentic 6mm Moissanite Cuban Bracelet from Jewelry Dept.", price: 250, inventory: 0, image_url: "https://jewelrydeptaz.myshopify.com/cdn/shop/files/IMG_2408.jpg?v=1711804538" },
 ];
 
 export default function Home() {
@@ -103,12 +82,10 @@ export default function Home() {
       if (Array.isArray(content?.products) && content.products.length) setProducts(content.products.map((product: Product) => ({ ...product, price: Number(product.price), inventory: Number(product.inventory) })));
       setCheckoutEnabled(Boolean(content?.checkoutEnabled));
     }).catch(() => {}).finally(() => setCatalogLoading(false));
-
-    const sessionId = getSessionId();
-    if (sessionId) {
-      fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
-    }
-
+    const storageKey = "jd-session";
+    let sessionId = sessionStorage.getItem(storageKey);
+    if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem(storageKey, sessionId); }
+    fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
     const refreshMetals = () => fetch("/api/custom-quote")
       .then(response => response.ok ? response.json() : null)
       .then(result => { if (result) setGoldPricing(result); })
@@ -133,61 +110,39 @@ export default function Home() {
     trackStoreEvent("checkout_start", undefined, cartTotal);
     const counts = cartItems.reduce<Record<number, number>>((all, id) => ({ ...all, [id]: (all[id] || 0) + 1 }), {});
     setCheckoutBusy(true);
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: Object.entries(counts).map(([id, quantity]) => ({ id: Number(id), quantity })) }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result?.url) return setCheckoutError(result?.error || "Checkout could not start.");
-      window.location.assign(result.url);
-    } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : "Checkout could not start.");
-    } finally {
-      setCheckoutBusy(false);
-    }
+    const response = await fetch("/api/checkout", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: Object.entries(counts).map(([id, quantity]) => ({ id: Number(id), quantity })) }),
+    });
+    const result = await response.json();
+    setCheckoutBusy(false);
+    if (!response.ok) return setCheckoutError(result.error || "Checkout could not start.");
+    window.location.assign(result.url);
   }
 
   async function submitCustomRequest(event: React.FormEvent) {
     event.preventDefault();
-    setCustomBusy(true);
-    setCustomMessage("");
-    try {
-      const response = await fetch("/api/custom-quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(customForm) });
-      const result = await response.json();
-      if (!response.ok) return setCustomMessage(result.error || "Your request could not be sent.");
-      trackStoreEvent("custom_request", undefined, Number(result.request?.estimated_total || 0));
-      setCustomMessage(`Request #${result.request.id} received. No payment was taken. We will review and approve your final quote.`);
-      setCustomForm(current => ({ ...current, description: "" }));
-    } catch (error) {
-      setCustomMessage(error instanceof Error ? error.message : "Your request could not be sent.");
-    } finally {
-      setCustomBusy(false);
-    }
+    setCustomBusy(true); setCustomMessage("");
+    const response = await fetch("/api/custom-quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(customForm) });
+    const result = await response.json(); setCustomBusy(false);
+    if (!response.ok) return setCustomMessage(result.error || "Your request could not be sent.");
+    trackStoreEvent("custom_request", undefined, Number(result.request?.estimated_total || 0));
+    setCustomMessage(`Request #${result.request.id} received. No payment was taken. We will review and approve your final quote.`);
+    setCustomForm(current => ({ ...current, description: "" }));
   }
 
   async function joinNewsletter(event: React.FormEvent) {
     event.preventDefault();
     setNewsletterMessage("");
     setNewsletterBusy(true);
-    try {
-      const response = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newsletterEmail }),
-      });
-      const result = await response.json();
-      setNewsletterMessage(result.message || result.error || "Signup could not be completed.");
-      if (response.ok) {
-        trackStoreEvent("newsletter_signup");
-        setNewsletterEmail("");
-      }
-    } catch (error) {
-      setNewsletterMessage(error instanceof Error ? error.message : "Signup could not be completed.");
-    } finally {
-      setNewsletterBusy(false);
-    }
+    const response = await fetch("/api/newsletter", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: newsletterEmail }),
+    });
+    const result = await response.json();
+    setNewsletterBusy(false);
+    setNewsletterMessage(result.message || result.error || "Signup could not be completed.");
+    if (response.ok) { trackStoreEvent("newsletter_signup"); setNewsletterEmail(""); }
   }
 
   const goldMarket = goldPricing?.metals?.gold || goldPricing?.market;
@@ -202,14 +157,12 @@ export default function Home() {
   const metalAllowance = metalCost * 0.15;
   const craftCost = craft ? Math.max(Number(craft.minimum), Number(customForm.grams) * Number(craft.perGram)) : 0;
   const customEstimate = Math.ceil((metalCost + metalAllowance + craftCost) / 5) * 5;
-
   const formatMarketPrice = (value: unknown, digits = 2) => {
     const price = Number(value);
     return Number.isFinite(price) && price > 0
       ? price.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits })
       : "—";
   };
-
   const marketUpdated = goldMarket?.updatedAt || silverMarket?.updatedAt;
   const marketUpdatedDate = marketUpdated ? new Date(marketUpdated) : null;
   const marketUpdatedLabel = marketUpdatedDate && !Number.isNaN(marketUpdatedDate.getTime())
@@ -243,7 +196,7 @@ export default function Home() {
       </div>
 
       <nav className="nav">
-        {menu && <button type="button" className="menuDismiss" onClick={closeMenu} aria-label="Close navigation menu" />}
+        {menu && <button className="menuDismiss" onClick={closeMenu} aria-label="Close navigation menu" />}
         <div className="desktopNav" aria-label="Primary navigation">
           <a href="#pieces">SHOP ALL</a>
           <a href="#pieces" onClick={() => setShopCategory("CHAINS")}>CHAINS</a>
@@ -253,7 +206,7 @@ export default function Home() {
           <a href="/reviews">REVIEWS</a>
         </div>
         <div className={`menuCluster ${menuSuppressed ? "menuSuppressed" : ""}`} ref={menuRef} onPointerLeave={() => setMenuSuppressed(false)}>
-          <button type="button" className="menuButton" onClick={toggleMenu} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
+          <button className="menuButton" onClick={toggleMenu} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
           <div className={`navlinks ${menu ? "open" : ""}`}>
             <a href="#drop" onClick={closeMenu}>FEATURED</a>
             <a href="#pieces" onClick={closeMenu}>SHOP ALL</a>
@@ -264,7 +217,7 @@ export default function Home() {
           </div>
         </div>
         <Logo />
-        <button type="button" className="cart" onClick={() => setCartOpen(true)} aria-label={`Open bag with ${cart} items`}>BAG <span>{cart}</span></button>
+        <button className="cart" onClick={() => setCartOpen(true)} aria-label={`Open bag with ${cart} items`}>BAG <span>{cart}</span></button>
       </nav>
 
       <section className={`featured ${catalogLoading ? "catalogLoading" : ""}`} id="drop" aria-busy={catalogLoading}>
@@ -279,9 +232,9 @@ export default function Home() {
           <div className="inventoryMaterial"><b>SOLID 925 STERLING SILVER</b><span>MOISSANITE STONES</span></div>
           <div className="buyRow">
             <div><small>FROM</small><strong>{catalogLoading ? "—" : "$" + featuredProduct.price.toLocaleString()}</strong></div>
-            <button type="button" disabled={catalogLoading || featuredProduct.inventory < 1} onClick={() => addToBag(featuredProduct)}>{catalogLoading ? "LOADING INVENTORY…" : featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"}</button>
+            <button disabled={catalogLoading || featuredProduct.inventory < 1} onClick={() => addToBag(featuredProduct)}>{catalogLoading ? "LOADING INVENTORY…" : featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"}</button>
           </div>
-          <div className="assurances"><span>✓ CERTIFIED STONES</span><span>✓ 30-DAY RETURNS</span><span>✓ LIFETIME SERVICE</span></div>
+          <div className="assurances"><span>✓ CERTIFIED STONES</span><span>✓ HAND-SET QUALITY</span></div>
         </div>
       </section>
 
@@ -301,7 +254,7 @@ export default function Home() {
           <div className="shopOptions">
             <span>{catalogLoading ? "LOADING PIECES" : `${visibleProducts.length} ${visibleProducts.length === 1 ? "PIECE" : "PIECES"}`}</span>
             <label><input type="checkbox" checked={availableOnly} onChange={event => setAvailableOnly(event.target.checked)} /> IN STOCK ONLY</label>
-            <label><span className="srOnly">Sort products</span><select value={shopSort} onChange={event => setShopSort(event.target.value)}><option value="featured">FEATURED</option><option value="price-low">PRICE: LOW TO HIGH</option><option value="price-high">PRICE: HIGH TO LOW</option><option value="name">NAME</option></select></label>
+            <label><span className="srOnly">Sort products</span><select value={shopSort} onChange={event => setShopSort(event.target.value)}><option value="featured">FEATURED</option><option value="price-low">PRICE: LOW</option><option value="price-high">PRICE: HIGH</option><option value="name">NAME</option></select></label>
           </div>
         </div>
         <div className="productGrid">
@@ -319,10 +272,10 @@ export default function Home() {
               </Link>
               <div className="cardTop"><h3><Link href={`/products/${product.id}`}>{product.name}</Link></h3><strong>${product.price.toLocaleString()}</strong></div>
               <p className="cardSpec">{productSpec(product.name)}</p>
-              <button type="button" aria-label={`Add ${product.name} to bag`} disabled={product.inventory < 1} onClick={() => addToBag(product)}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "→"}</span></button>
+              <button aria-label={`Add ${product.name} to bag`} disabled={product.inventory < 1} onClick={() => addToBag(product)}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory > 0 ? "→" : ""}</span></button>
             </article>
           ))}
-          {!catalogLoading && !visibleProducts.length && <div className="emptyCollection"><b>No pieces match those filters.</b><button type="button" onClick={() => { setShopCategory("ALL"); setAvailableOnly(false); }}>CLEAR FILTERS</button></div>}
+          {!catalogLoading && !visibleProducts.length && <div className="emptyCollection"><b>No pieces match those filters.</b><button type="button" onClick={() => { setShopCategory("ALL"); setAvailableOnly(false); }}>RESET</button></div>}
         </div>
       </section>
 
@@ -371,19 +324,18 @@ export default function Home() {
         <div className="customIntro">
           <p className="eyebrow">05 / CUSTOM GOLD DEPT.</p>
           <h2>Your idea.<br /><em>Priced responsibly.</em></h2>
-          <p>Custom gold requests use the current gold market, karat purity, estimated finished weight, a 15% sourcing and casting allowance, and craftsmanship. This is an estimate only—no payment is collected at the time of request.</p>
-          <div className="marketPrice"><span>GOLD MARKET</span><b>{spot ? "$" + spot.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " / TROY OZ" : "LOADING…"}</b><small>{goldPricing ? `Updated ${marketUpdatedLabel}` : "Loading current market"}</small></div>
-          <div className="steps"><div><b>01</b><span>Submit design and estimated weight</span></div><div><b>02</b><span>Management verifies and approves</span></div><div><b>03</b><span>Final quote and order follow-up</span></div></div>
+          <p>Custom gold requests use the current gold market, karat purity, estimated finished weight, a 15% sourcing and casting allowance, and craftsmanship. This is an estimate only—no payment is taken before approval.</p>
+          <div className="marketPrice"><span>GOLD MARKET</span><b>{spot ? "$" + spot.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " / TROY OZ" : "LOADING…"}</b><small>{goldPricing ? "Updated " + marketUpdatedLabel : "Loading current market"}</small></div>
+          <div className="steps"><div><b>01</b><span>Submit design and estimated weight</span></div><div><b>02</b><span>Management verifies and approves</span></div><div><b>03</b><span>Final quote and payment terms</span></div></div>
         </div>
         <form className="customQuoteForm" onSubmit={submitCustomRequest}>
-          <div className="customFields"><label>Name<input required value={customForm.name} onChange={event => setCustomForm({ ...customForm, name: event.target.value })} /></label><label>Email<input required type="email" value={customForm.email} onChange={event => setCustomForm({ ...customForm, email: event.target.value })} /></label></div>
-          <div className="customFields"><label>Phone<input type="tel" value={customForm.phone} onChange={event => setCustomForm({ ...customForm, phone: event.target.value })} /></label><label>Estimated grams<input type="number" min={1} max={1000} value={customForm.grams} onChange={event => setCustomForm({ ...customForm, grams: Number(event.target.value) || 0 })} /></label></div>
-          <label>Gold purity<select value={customForm.karat} onChange={event => setCustomForm({ ...customForm, karat: event.target.value })}><option>10K</option><option>14K</option><option>18K</option><option>24K</option></select></label>
-          <label>Craftsmanship<select value={customForm.complexity} onChange={event => setCustomForm({ ...customForm, complexity: event.target.value })}><option value="classic">Classic / simple</option><option value="detailed">Detailed custom</option><option value="pave">Pavé / stone intensive</option></select></label>
-          <label>Stone choice<select value={customForm.stone} onChange={event => setCustomForm({ ...customForm, stone: event.target.value })}><option>No stones</option><option>Moissanite</option><option>Lab diamond</option><option>Natural diamond</option></select></label>
-          <label>Describe the piece<textarea required value={customForm.description} onChange={event => setCustomForm({ ...customForm, description: event.target.value })} placeholder="Piece type, dimensions, stone, finish, and special details." /></label>
-          <div className="estimateBox"><span>ESTIMATED CUSTOM GOLD TOTAL</span><strong>{customEstimate ? "$" + customEstimate.toLocaleString() : "—"}</strong><small>Includes metal cost, 15% sourcing allowance, and craftsmanship estimate based on current market conditions.</small></div>
-          <button type="submit" className="primary" disabled={customBusy}>{customBusy ? "SENDING REQUEST…" : "REQUEST MANAGEMENT APPROVAL →"}</button>
+          <div className="customFields"><label>Name<input required value={customForm.name} onChange={event => setCustomForm({...customForm, name:event.target.value})} /></label><label>Email<input type="email" required value={customForm.email} onChange={event => setCustomForm({...customForm, email:event.target.value})} /></label></div>
+          <div className="customFields"><label>Phone<input value={customForm.phone} onChange={event => setCustomForm({...customForm, phone:event.target.value})} /></label><label>Gold purity<select value={customForm.karat} onChange={event => setCustomForm({...customForm, karat:event.target.value})}><option>10K</option><option>14K</option><option>18K</option><option>24K</option></select></label></div>
+          <label>Craftsmanship<select value={customForm.complexity} onChange={event => setCustomForm({...customForm, complexity:event.target.value})}><option value="classic">Classic / simple — $150 minimum</option><option value="detailed">Detailed custom — $250 minimum</option><option value="pave">Pavé / stone intensive — $400 minimum</option></select></label>
+          <label>Stone choice<select value={customForm.stone} onChange={event => setCustomForm({...customForm, stone:event.target.value})}><option>No stones</option><option>Moissanite</option><option>Lab diamond</option><option>Natural diamond</option></select></label>
+          <label>Describe the piece<textarea required value={customForm.description} onChange={event => setCustomForm({...customForm, description:event.target.value})} placeholder="Piece type, dimensions, stones, and any notes for the design." /></label>
+          <div className="estimateBox"><span>ESTIMATED CUSTOM GOLD TOTAL</span><strong>{customEstimate ? "$" + customEstimate.toLocaleString() : "—"}</strong><small>Includes estimated metal value, sourcing allowance, and craftsmanship. Final review may adjust pricing. </small></div>
+          <button className="primary" disabled={customBusy}>{customBusy ? "SENDING REQUEST…" : "REQUEST MANAGEMENT APPROVAL →"}</button>
           {customMessage && <p className="customMessage">{customMessage}</p>}
         </form>
       </section>
@@ -392,7 +344,7 @@ export default function Home() {
         <div className="metalMarketIntro">
           <p className="eyebrow">CURRENT METALS · USD</p>
           <h2 id="metal-market-heading">Gold &amp; silver<br /><em>market reference.</em></h2>
-          <p>Spot prices update automatically about every five minutes. Finished jewelry pricing also includes purity, weight, sourcing, casting, stone setting, craftsmanship, taxes, and shipping if applicable.</p>
+          <p>Spot prices update automatically about every five minutes. Finished jewelry pricing also includes purity, weight, sourcing, casting, stone setting, craftsmanship, taxes, and shipping.</p>
           <span>UPDATED {marketUpdatedLabel.toUpperCase()}</span>
         </div>
         <div className="metalQuotes" aria-live="polite">
@@ -400,22 +352,20 @@ export default function Home() {
             <div><span className="metalSymbol">AU</span><p>GOLD <small>XAU</small></p></div>
             <strong>{formatMarketPrice(goldMarket?.price)}</strong>
             <p>PER TROY OUNCE</p>
-            <div className="metalQuoteFoot"><div className="goldKaratPrices" aria-label="Gold market value per gram by karat"><b>24K {formatMarketPrice(goldPerGram)} / G</b><b>18K {formatMarketPrice(goldPerGram * Number(goldPricing?.purity?.["18K"] || 0.75))} / G</b><b>14K {formatMarketPrice(gold14KPerGram)} / G</b><b>10K {formatMarketPrice(gold10KPerGram)} / G</b></div></div>
+            <div className="metalQuoteFoot"><div className="goldKaratPrices" aria-label="Gold market value per gram by karat"><b>24K {formatMarketPrice(goldPerGram)} / G</b><b>14K {formatMarketPrice(gold14KPerGram)} / G</b></div></div>
           </article>
           <article className="silverQuote">
             <div><span className="metalSymbol">AG</span><p>SILVER <small>XAG</small></p></div>
             <strong>{formatMarketPrice(silverMarket?.price)}</strong>
             <p>PER TROY OUNCE</p>
-            <div className="metalQuoteFoot"><b>{formatMarketPrice(silverMarket?.pricePerGram)} / GRAM</b><span className={silverMarket?.live ? "marketLive" : "marketReference"}>{silverMarket?.live ? "LIVE" : "FALLBACK"}</span></div>
+            <div className="metalQuoteFoot"><b>{formatMarketPrice(silverMarket?.pricePerGram)} / GRAM</b><span className={silverMarket?.live ? "marketLive" : "marketReference"}>{silverMarket?.live ? "LIVE" : "REFERENCE"}</span></div>
           </article>
         </div>
       </section>
 
       <section className="signup">
-        <div>
-          <p className="eyebrow">PRIVATE CLIENT LIST</p>
-          <h2>First access.<br /><em>No restocks.</em></h2>
-        </div>
+        <p className="eyebrow">PRIVATE CLIENT LIST</p>
+        <h2>First access.<br /><em>No restocks.</em></h2>
         <form onSubmit={joinNewsletter}>
           <label className="srOnly" htmlFor="email">Email address</label>
           <input id="email" type="email" placeholder="YOUR EMAIL" value={newsletterEmail} onChange={event => setNewsletterEmail(event.target.value)} required />
@@ -426,24 +376,24 @@ export default function Home() {
 
       {cartOpen && <div className="cartOverlay" onClick={() => setCartOpen(false)}>
         <aside className="cartDrawer" role="dialog" aria-modal="true" aria-label="Shopping bag" onClick={event => event.stopPropagation()}>
-          <div className="cartDrawerHead"><div><p>YOUR BAG</p><h2>{cart} {cart === 1 ? "piece" : "pieces"}</h2></div><button type="button" onClick={() => setCartOpen(false)} aria-label="Close shopping bag">CLOSE</button></div>
+          <div className="cartDrawerHead"><div><p>YOUR BAG</p><h2>{cart} {cart === 1 ? "piece" : "pieces"}</h2></div><button onClick={() => setCartOpen(false)} aria-label="Close shopping bag">CLOSE</button></div>
           <div className="cartLines">
             {cartLines.map(product => <article key={product.id}>
               <img src={product.image_url || siteImages.featured} alt="" loading="lazy" decoding="async" />
-              <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button type="button" onClick={() => setCartItems(items => items.filter(id => id !== product.id))}>REMOVE</button></div>
+              <div><h3>{product.name}</h3><p>Quantity {product.quantity}</p><button onClick={() => setCartItems(items => { const index = items.indexOf(product.id); return index < 0 ? items : items.filter((id, itemIndex) => itemIndex !== index); })}>REMOVE</button></div>
               <strong>${(product.price * product.quantity).toLocaleString()}</strong>
             </article>)}
           </div>
           <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
-          <p className="cartNote">{cartTotal >= 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : cartTotal === 0 ? "Free standard shipping on orders of $100 or more." : "Add $" + (100 - cartTotal).toLocaleString() + " to unlock free standard shipping."}</p>
+          <p className="cartNote">{cartTotal >= 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : cartTotal === 0 ? "Free standard shipping on orders of $100 or more." : "Shipping and taxes are calculated at checkout."}</p>
           {checkoutError && <p className="cartError">{checkoutError}</p>}
-          <div className="cartActions"><button type="button" className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button type="button" className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "STARTING…" : "CHECKOUT"}</button></div>
+          <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "CHECKING OUT…" : "CHECKOUT"}</button></div>
         </aside>
       </div>}
 
       {cart > 0 && <div className="checkoutBar">
         <div><b>{cart} {cart === 1 ? "PIECE" : "PIECES"} · ${cartTotal.toLocaleString()}</b>{checkoutError && <span>{checkoutError}</span>}</div>
-        <div className="checkoutBarActions"><button type="button" onClick={() => setCartOpen(true)}>VIEW BAG</button><button type="button" onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "CHECKING OUT…" : "CHECKOUT"}</button></div>
+        <div className="checkoutBarActions"><button onClick={() => setCartOpen(true)}>VIEW BAG</button><button onClick={startCheckout} disabled={checkoutBusy || !checkoutEnabled}>{checkoutBusy ? "PROCESSING…" : "CHECKOUT"}</button></div>
       </div>}
 
       <footer>
