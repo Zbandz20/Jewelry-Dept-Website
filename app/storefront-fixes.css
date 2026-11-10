@@ -1,14 +1,48 @@
-/* Final storefront fix for the 6mm featured section */
+/* Final storefront layout overrides — preserve the existing black, blue, and gold palette. */
 
-/* Keep the featured image block from clipping the content underneath */
+/* The original logo rules used object-fit: cover and a scale transform, cropping the lettering. */
+.nav > .wordmark {
+  display: flex !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  align-self: center !important;
+  justify-self: center !important;
+  box-sizing: border-box !important;
+  width: min(300px, 30vw) !important;
+  height: 150px !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  padding: 12px 18px !important;
+  margin: 0 auto !important;
+  overflow: visible !important;
+}
+
+.nav > .wordmark > img {
+  display: block !important;
+  visibility: visible !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  transform: none !important;
+  filter: brightness(0) invert(1) drop-shadow(0 2px 2px rgba(0,0,0,.82)) !important;
+}
+
+.nav {
+  min-height: 190px !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Keep the featured section and its image from clipping the information below. */
 .featured {
   overflow: visible !important;
   min-height: 0 !important;
 }
 
-.featured > * {
-  min-width: 0;
-}
+.featured > * { min-width: 0; }
 
 .featured .productVisual {
   position: relative;
@@ -30,10 +64,21 @@
 }
 
 .featured .featuredInfo {
+  min-width: 0;
   padding-bottom: 32px;
 }
 
 @media (max-width: 900px) {
+  .nav {
+    min-height: 170px !important;
+  }
+
+  .nav > .wordmark {
+    width: min(240px, 34vw) !important;
+    height: 125px !important;
+    padding: 10px 14px !important;
+  }
+
   .featured .productVisual {
     min-height: 320px !important;
     aspect-ratio: auto !important;
@@ -41,7 +86,21 @@
 }
 
 @media (max-width: 600px) {
+  .nav {
+    min-height: 145px !important;
+  }
+
+  .nav > .wordmark {
+    width: min(190px, 38vw) !important;
+    height: 105px !important;
+    padding: 8px 10px !important;
+  }
+
   .featured .productVisual {
     min-height: 260px !important;
+  }
+
+  .featured .featuredInfo {
+    padding: 30px 20px !important;
   }
 }
