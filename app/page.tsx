@@ -22,6 +22,11 @@ function productCategory(name: string) {
   if (value.includes("chain")) return "CHAINS";
   return "ALL";
 }
+
+function productSpec(name: string) {
+  const width = name.match(/\b\d+(?:\.\d+)?mm\b/i)?.[0]?.toUpperCase();
+  return ["SOLID 925 SILVER", "MOISSANITE", width].filter(Boolean).join(" · ");
+}
 function trackStoreEvent(eventName: "product_view" | "add_to_cart" | "checkout_start" | "newsletter_signup" | "custom_request", productId?: number, amount?: number) {
   const sessionId = sessionStorage.getItem("jd-session") || "";
   if (!sessionId) return;
@@ -44,7 +49,8 @@ export default function Home() {
   const [checkoutEnabled, setCheckoutEnabled] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
-  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [goldPricing, setGoldPricing] = useState<GoldPricing | null>(null);
   const [customForm, setCustomForm] = useState({ name: "", email: "", phone: "", description: "", karat: "14K", grams: 10, stone: "Moissanite", complexity: "detailed" });
   const [customBusy, setCustomBusy] = useState(false);
@@ -75,7 +81,7 @@ export default function Home() {
       if (content?.assets) setSiteImages(current => ({ ...current, ...content.assets }));
       if (Array.isArray(content?.products) && content.products.length) setProducts(content.products.map((product: Product) => ({ ...product, price: Number(product.price), inventory: Number(product.inventory) })));
       setCheckoutEnabled(Boolean(content?.checkoutEnabled));
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setCatalogLoading(false));
     const storageKey = "jd-session";
     let sessionId = sessionStorage.getItem(storageKey);
     if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem(storageKey, sessionId); }
@@ -191,6 +197,14 @@ export default function Home() {
 
       <nav className="nav">
         {menu && <button className="menuDismiss" onClick={closeMenu} aria-label="Close navigation menu" />}
+        <div className="desktopNav" aria-label="Primary navigation">
+          <a href="#pieces">SHOP ALL</a>
+          <a href="#pieces" onClick={() => setShopCategory("CHAINS")}>CHAINS</a>
+          <a href="#pieces" onClick={() => setShopCategory("BRACELETS")}>BRACELETS</a>
+          <a href="#pieces" onClick={() => setShopCategory("EARRINGS")}>EARRINGS</a>
+          <a href="#custom">CUSTOM</a>
+          <a href="/reviews">REVIEWS</a>
+        </div>
         <div className={`menuCluster ${menuSuppressed ? "menuSuppressed" : ""}`} ref={menuRef} onPointerLeave={() => setMenuSuppressed(false)}>
           <button className="menuButton" onClick={toggleMenu} aria-label="Toggle navigation" aria-expanded={menu}>MENU</button>
           <div className={`navlinks ${menu ? "open" : ""}`}>
@@ -207,51 +221,29 @@ export default function Home() {
       </nav>
 
 
-      <section className="manifesto">
-        <span>01 / FEEL</span>
-        <h1>You don’t wear it to be seen.<br />You wear it so they <em>never forget.</em></h1>
-        <p>Every piece leaves the bench certified, hand-set, and cut to throw light across a room. This isn’t jewelry that whispers. It announces.</p>
-      </section>
-
-      <section className="metalMarket" aria-labelledby="metal-market-heading">
-        <div className="metalMarketIntro">
-          <p className="eyebrow">CURRENT METALS · USD</p>
-          <h2 id="metal-market-heading">Gold &amp; silver<br /><em>market reference.</em></h2>
-          <p>Spot prices update automatically about every five minutes. Finished jewelry pricing also includes purity, weight, sourcing, casting, stone setting, craftsmanship, taxes, and shipping.</p>
-          <span>UPDATED {marketUpdatedLabel.toUpperCase()}</span>
-        </div>
-        <div className="metalQuotes" aria-live="polite">
-          <article className="goldQuote">
-            <div><span className="metalSymbol">AU</span><p>GOLD <small>XAU</small></p></div>
-            <strong>{formatMarketPrice(goldMarket?.price)}</strong>
-            <p>PER TROY OUNCE</p>
-            <div className="metalQuoteFoot"><div className="goldKaratPrices" aria-label="Gold market value per gram by karat"><b>24K {formatMarketPrice(goldPerGram)} / G</b><b>14K {formatMarketPrice(gold14KPerGram)} / G</b><b>10K {formatMarketPrice(gold10KPerGram)} / G</b></div><span className={goldMarket?.live ? "marketLive" : "marketReference"}>{goldMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
-          </article>
-          <article className="silverQuote">
-            <div><span className="metalSymbol">AG</span><p>SILVER <small>XAG</small></p></div>
-            <strong>{formatMarketPrice(silverMarket?.price)}</strong>
-            <p>PER TROY OUNCE</p>
-            <div className="metalQuoteFoot"><b>{formatMarketPrice(silverMarket?.pricePerGram)} / GRAM</b><span className={silverMarket?.live ? "marketLive" : "marketReference"}>{silverMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
-          </article>
-        </div>
-      </section>
-
-      <section className="featured" id="drop">
+      <section className={`featured ${catalogLoading ? "catalogLoading" : ""}`} id="drop" aria-busy={catalogLoading}>
         <div className="productVisual">
-          <img src={featuredProduct.image_url || siteImages.featured} alt={featuredProduct.name} fetchPriority="high" decoding="async" />
+          <img src={catalogLoading ? siteImages.featured : featuredProduct.image_url || siteImages.featured} alt={catalogLoading ? "" : featuredProduct.name} fetchPriority="high" decoding="async" />
           <span className="dropTag">DROP 05 · LIMITED</span>
         </div>
         <div className="featuredInfo">
           <p className="eyebrow">FEATURED — THE DROP</p>
-          <h2>{featuredProduct.name}</h2>
-          <p>{featuredProduct.description || "Hand-finished jewelry, made to stand out."}</p>
+          <h2>{catalogLoading ? "Loading the latest drop…" : featuredProduct.name}</h2>
+          <p>{catalogLoading ? "Checking current inventory and pricing." : featuredProduct.description || "Hand-finished jewelry, made to stand out."}</p>
           <div className="inventoryMaterial"><b>SOLID 925 STERLING SILVER</b><span>MOISSANITE STONES</span></div>
           <div className="buyRow">
-            <div><small>FROM</small><strong>${featuredProduct.price.toLocaleString()}</strong></div>
-            <button disabled={featuredProduct.inventory < 1} onClick={() => addToBag(featuredProduct)}>{featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG — SHIPS FREE"}</button>
+            <div><small>FROM</small><strong>{catalogLoading ? "—" : "$" + featuredProduct.price.toLocaleString()}</strong></div>
+            <button disabled={catalogLoading || featuredProduct.inventory < 1} onClick={() => addToBag(featuredProduct)}>{catalogLoading ? "LOADING INVENTORY…" : featuredProduct.inventory < 1 ? "SOLD OUT" : "ADD TO BAG — SHIPS FREE"}</button>
           </div>
           <div className="assurances"><span>✓ CERTIFIED STONES</span><span>✓ 30-DAY RETURNS</span><span>✓ LIFETIME SERVICE</span></div>
         </div>
+      </section>
+
+      <section className="trustStrip" aria-label="Shopping benefits">
+        <span>FREE SHIPPING OVER $100</span>
+        <span>30-DAY RETURNS</span>
+        <span>CERTIFIED STONES</span>
+        <Link href="/reviews">★ 4.9 FACEBOOK RATING</Link>
       </section>
 
       <section className="pieces" id="pieces">
@@ -261,27 +253,39 @@ export default function Home() {
             {shopCategories.map(category => <button type="button" className={shopCategory === category ? "active" : ""} onClick={() => setShopCategory(category)} key={category}>{category}</button>)}
           </div>
           <div className="shopOptions">
-            <span>{visibleProducts.length} {visibleProducts.length === 1 ? "PIECE" : "PIECES"}</span>
+            <span>{catalogLoading ? "LOADING PIECES" : `${visibleProducts.length} ${visibleProducts.length === 1 ? "PIECE" : "PIECES"}`}</span>
             <label><input type="checkbox" checked={availableOnly} onChange={event => setAvailableOnly(event.target.checked)} /> IN STOCK ONLY</label>
             <label><span className="srOnly">Sort products</span><select value={shopSort} onChange={event => setShopSort(event.target.value)}><option value="featured">FEATURED</option><option value="price-low">PRICE: LOW TO HIGH</option><option value="price-high">PRICE: HIGH TO LOW</option><option value="name">NAME: A–Z</option></select></label>
           </div>
         </div>
         <div className="productGrid">
-          {visibleProducts.map((product, index) => (
+          {catalogLoading ? Array.from({ length: 6 }).map((_, index) => (
+            <article className="card cardSkeleton" key={index} aria-hidden="true">
+              <div className="cardImage skeletonBlock" />
+              <div className="skeletonLine skeletonTitle" />
+              <div className="skeletonLine" />
+            </article>
+          )) : visibleProducts.map((product, index) => (
             <article className="card" key={product.name}>
               <Link className={`cardImage crop${index + 1}`} href={`/products/${product.id}`} aria-label={`View details for ${product.name}`}>
                 <img src={product.image_url || siteImages.featured} alt={product.name} loading="lazy" decoding="async" />
                 <span>{product.inventory > 0 ? `${product.inventory} AVAILABLE` : "SOLD OUT"}</span>
               </Link>
               <div className="cardTop"><h3><Link href={`/products/${product.id}`}>{product.name}</Link></h3><strong>${product.price.toLocaleString()}</strong></div>
-              <p>{product.description || "Hand-finished by Jewelry Dept."}</p>
-              <button disabled={product.inventory < 1} onClick={() => addToBag(product)}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "+"}</span></button>
+              <p className="cardSpec">{productSpec(product.name)}</p>
+              <button aria-label={`Add ${product.name} to bag`} disabled={product.inventory < 1} onClick={() => addToBag(product)}>{product.inventory < 1 ? "SOLD OUT" : "ADD TO BAG"} <span>{product.inventory < 1 ? "" : "+"}</span></button>
             </article>
           ))}
-          {!visibleProducts.length && <div className="emptyCollection"><b>No pieces match those filters.</b><button type="button" onClick={() => { setShopCategory("ALL"); setAvailableOnly(false); }}>RESET FILTERS</button></div>}
+          {!catalogLoading && !visibleProducts.length && <div className="emptyCollection"><b>No pieces match those filters.</b><button type="button" onClick={() => { setShopCategory("ALL"); setAvailableOnly(false); }}>RESET FILTERS</button></div>}
         </div>
       </section>
 
+
+      <section className="manifesto">
+        <span>01 / FEEL</span>
+        <h1>You don’t wear it to be seen.<br />You wear it so they <em>never forget.</em></h1>
+        <p>Every piece leaves the bench certified, hand-set, and cut to throw light across a room. This isn’t jewelry that whispers. It announces.</p>
+      </section>
 
       <section className="proof" id="proof">
         <div className="stoneIntro">
@@ -338,6 +342,29 @@ export default function Home() {
         </form>
       </section>
 
+      <section className="metalMarket" aria-labelledby="metal-market-heading">
+        <div className="metalMarketIntro">
+          <p className="eyebrow">CURRENT METALS · USD</p>
+          <h2 id="metal-market-heading">Gold &amp; silver<br /><em>market reference.</em></h2>
+          <p>Spot prices update automatically about every five minutes. Finished jewelry pricing also includes purity, weight, sourcing, casting, stone setting, craftsmanship, taxes, and shipping.</p>
+          <span>UPDATED {marketUpdatedLabel.toUpperCase()}</span>
+        </div>
+        <div className="metalQuotes" aria-live="polite">
+          <article className="goldQuote">
+            <div><span className="metalSymbol">AU</span><p>GOLD <small>XAU</small></p></div>
+            <strong>{formatMarketPrice(goldMarket?.price)}</strong>
+            <p>PER TROY OUNCE</p>
+            <div className="metalQuoteFoot"><div className="goldKaratPrices" aria-label="Gold market value per gram by karat"><b>24K {formatMarketPrice(goldPerGram)} / G</b><b>14K {formatMarketPrice(gold14KPerGram)} / G</b><b>10K {formatMarketPrice(gold10KPerGram)} / G</b></div><span className={goldMarket?.live ? "marketLive" : "marketReference"}>{goldMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
+          </article>
+          <article className="silverQuote">
+            <div><span className="metalSymbol">AG</span><p>SILVER <small>XAG</small></p></div>
+            <strong>{formatMarketPrice(silverMarket?.price)}</strong>
+            <p>PER TROY OUNCE</p>
+            <div className="metalQuoteFoot"><b>{formatMarketPrice(silverMarket?.pricePerGram)} / GRAM</b><span className={silverMarket?.live ? "marketLive" : "marketReference"}>{silverMarket?.live ? "LIVE MARKET" : "REFERENCE PRICE"}</span></div>
+          </article>
+        </div>
+      </section>
+
       <section className="signup">
         <p className="eyebrow">PRIVATE CLIENT LIST</p>
         <h2>First access.<br /><em>No restocks.</em></h2>
@@ -360,7 +387,7 @@ export default function Home() {
             </article>)}
           </div>
           <div className="cartTotal"><span>Estimated total</span><strong>${cartTotal.toLocaleString()}</strong></div>
-          <p className="cartNote">{cartTotal > 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : "Standard shipping is $9.95 and will be shown at checkout. Add $" + Math.max(0.01, 100.01 - cartTotal).toFixed(2) + " more for free shipping."}</p>
+          <p className="cartNote">{cartTotal >= 100 ? "✓ Free standard shipping applied. Taxes are calculated at checkout." : cartTotal === 0 ? "Free standard shipping on orders of $100 or more." : "Standard shipping is $9.95 and will be shown at checkout. Add $" + Math.max(0, 100 - cartTotal).toFixed(2) + " more for free shipping."}</p>
           {checkoutError && <p className="cartError">{checkoutError}</p>}
           <div className="cartActions"><button className="continueShopping" onClick={() => setCartOpen(false)}>CONTINUE SHOPPING</button><button className="cartCheckout" onClick={startCheckout} disabled={checkoutBusy || cart < 1 || !checkoutEnabled}>{checkoutBusy ? "OPENING…" : checkoutEnabled ? "SECURE CHECKOUT →" : "CHECKOUT COMING SOON"}</button></div>
         </aside>
