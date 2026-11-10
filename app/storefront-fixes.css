@@ -1,134 +1,47 @@
-/* Recommended storefront fix set — keep the luxury palette but remove the crop artifacts. */
+/* Final storefront fix for the 6mm featured section */
 
-/* --- Logo: stop all clipping and keep the full mark visible --- */
-.nav > .wordmark,
-footer > .wordmark {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: clamp(180px, 24vw, 300px) !important;
-  height: auto !important;
-  min-height: 80px !important;
-  max-height: none !important;
-  overflow: visible !important;
-  padding: 0 !important;
-  margin: 0 auto !important;
-  flex: 0 0 auto !important;
-}
-
-.nav > .wordmark > img,
-footer > .wordmark > img {
-  display: block !important;
-  width: 100% !important;
-  height: auto !important;
-  max-height: 150px !important;
-  object-fit: contain !important;
-  object-position: center !important;
-  transform: none !important;
-  filter: brightness(0) invert(1) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.82)) !important;
-}
-
-/* Keep the nav from collapsing around the logo */
-.nav {
-  min-height: 120px !important;
-  height: auto !important;
-}
-
-/* --- Restore live metals and featured section higher in the stack --- */
-.ticker { order: 0 !important; }
-.nav { order: 1 !important; }
-.metalMarket { order: 2 !important; }
-.featured { order: 3 !important; }
-.trustStrip { order: 4 !important; }
-.pieces { order: 5 !important; }
-.manifesto { order: 6 !important; }
-.proof { order: 7 !important; }
-.custom { order: 8 !important; }
-.marketplaceReviews { order: 9 !important; }
-.signup { order: 10 !important; }
-footer { order: 11 !important; }
-
-/* --- Better featured product placement --- */
+/* Keep the featured image block from clipping the content underneath */
 .featured {
-  width: min(1320px, calc(100% - 10vw));
+  overflow: visible !important;
   min-height: 0 !important;
-  margin: 24px auto 58px !important;
-  border: 1px solid rgba(79, 166, 216, 0.25) !important;
-  border-radius: 20px;
-  overflow: hidden;
+}
+
+.featured > * {
+  min-width: 0;
 }
 
 .featured .productVisual {
-  min-height: 0 !important;
-  aspect-ratio: 1 / 1;
-  max-height: 620px;
+  position: relative;
+  overflow: hidden;
+  min-height: 420px !important;
+  height: 100%;
+  max-height: none !important;
+  aspect-ratio: auto !important;
 }
 
 .featured .productVisual img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  max-height: 620px;
+  object-fit: cover;
+  object-position: center center;
   background: #080b0d;
 }
 
-/* --- Tighten the metal card layout so it reads like the earlier version --- */
-.metalMarket {
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) !important;
-  padding: 26px 5vw !important;
+.featured .featuredInfo {
+  padding-bottom: 32px;
 }
 
 @media (max-width: 900px) {
-  .nav {
-    min-height: 110px !important;
-  }
-
-  .nav > .wordmark,
-  footer > .wordmark {
-    width: min(240px, 34vw) !important;
-    min-height: 72px !important;
-  }
-
-  .featured {
-    width: calc(100% - 36px);
-    margin: 18px auto 42px !important;
-  }
-
   .featured .productVisual {
-    aspect-ratio: 4 / 3;
-  }
-
-  .metalMarket {
-    grid-template-columns: 1fr !important;
-    padding: 24px 5vw !important;
+    min-height: 320px !important;
+    aspect-ratio: auto !important;
   }
 }
 
 @media (max-width: 600px) {
-  .nav {
-    min-height: 96px !important;
-  }
-
-  .nav > .wordmark,
-  footer > .wordmark {
-    width: min(190px, 38vw) !important;
-    min-height: 70px !important;
-  }
-
-  .featured {
-    width: calc(100% - 28px);
-    margin: 14px auto 32px !important;
-  }
-
   .featured .productVisual {
-    aspect-ratio: 1 / 1;
-  }
-
-  .featuredInfo {
-    padding: 30px 20px !important;
-  }
-
-  .metalMarket {
-    padding: 18px 14px !important;
+    min-height: 260px !important;
   }
 }
