@@ -240,7 +240,6 @@ export default function Home() {
 
       <section className="trustStrip" aria-label="Shopping benefits">
         <span>FREE SHIPPING OVER $100</span>
-        <span>30-DAY RETURNS</span>
         <span>CERTIFIED STONES</span>
         <Link href="/reviews">★ 4.9 FACEBOOK RATING</Link>
       </section>

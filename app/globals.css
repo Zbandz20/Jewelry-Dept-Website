@@ -1063,7 +1063,7 @@ main { display:flex; flex-direction:column; }
 .trustStrip {
   order:3;
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(3,1fr);
   margin:0 4vw;
   border:1px solid rgba(79,166,216,.3);
   border-top:0;
@@ -1206,11 +1206,9 @@ footer { order:10; }
   .productVisual { min-height:440px; }
   .featuredInfo { padding:46px 5vw; }
   .trustStrip {
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(3,1fr);
     margin:0 18px;
   }
-  .trustStrip span:nth-child(2) { border-right:0; }
-  .trustStrip span:nth-child(-n+2) { border-bottom:1px solid rgba(79,166,216,.22); }
   .productGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 

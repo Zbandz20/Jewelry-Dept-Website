@@ -18,7 +18,7 @@ const policies = {
     title: "Returns & Refunds",
     updated: "August 7, 2026",
     sections: [
-      ["30-day returns", "Eligible in-stock items may be requested for return within 30 days of delivery. Items must be unworn, unaltered, undamaged, and returned with their original packaging and included documentation."],
+      ["Return eligibility", "Eligible in-stock items may be requested for return under the conditions below. Items must be unworn, unaltered, undamaged, and returned with their original packaging and included documentation."],
       ["Non-returnable items", "Custom, personalized, engraved, resized, modified, final-sale, and made-to-order pieces are not returnable unless they arrive damaged or materially different from the approved order."],
       ["Starting a return", "Email hello@jewelrydept.co before shipping anything back. Returns sent without approval may be refused. Return shipping is the customer’s responsibility unless Jewelry Dept. confirms an error or defect."],
       ["Refund timing", "Approved refunds are issued to the original payment method after inspection. Banks and card providers may require additional time to post the credit."],

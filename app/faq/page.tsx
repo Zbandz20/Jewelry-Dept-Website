@@ -31,7 +31,7 @@ const questions = [
   },
   {
     question: "What is your return policy?",
-    answer: "Eligible in-stock items may be returned within 30 days under the posted return policy. Custom, altered, engraved, worn, damaged, and final-sale pieces may not be eligible. Review the full policy before ordering.",
+    answer: "Return eligibility depends on the item type and condition. Custom, altered, engraved, worn, damaged, and final-sale pieces may not be eligible. Review the full policy before ordering and contact us before sending anything back.",
   },
   {
     question: "How do custom jewelry requests work?",
